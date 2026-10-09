@@ -1017,6 +1017,104 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'dobeeModels',
+    summary: 'Exposes the Host provider manager through an independently generated transport.',
+    description: 'Exposes the Host provider manager through an independently generated transport.',
+    methods: [
+      {
+        signature: '@Remote presets(): ProviderPreset[]',
+        description: 'Read supported provider access categories.',
+        parameters: [],
+        returns: 'API and subscription presets with default endpoints.',
+      },
+      {
+        signature: '@Remote catalog(connectionId: string): Promise<ProviderModel[]>',
+        description: 'Read the provider\'s local catalog without a network request.',
+        parameters: [{ name: 'connectionId', description: 'saved provider.' }],
+        returns: 'local model metadata without endpoint I/O.',
+      },
+      {
+        signature: '@Remote models(request: ProviderModelsRequest, signal: AbortSignal): Promise<ProviderModel[]>',
+        description: 'Synchronize the provider\'s live model catalog.',
+        parameters: [{ name: 'request', description: 'staged endpoint facts.' }, { name: 'signal', description: 'caller cancellation.' }],
+        returns: 'live endpoint model candidates.',
+      },
+      {
+        signature: '@Remote status(connectionId: string): Promise<SubscriptionStatus>',
+        description: 'Read public subscription account state.',
+        parameters: [{ name: 'connectionId', description: 'saved subscription.' }],
+        returns: 'safe account metadata without any tokens.',
+      },
+      {
+        signature: '@Remote({ mode: \'stream\' }) async *login(connectionId: string, signal: AbortSignal): AsyncIterable<SubscriptionLoginFrame>',
+        description: 'Start account authorization for the initiating client.',
+        parameters: [{ name: 'connectionId', description: 'saved subscription.' }, { name: 'signal', description: 'caller cancellation.' }],
+        returns: 'public device-login notices.',
+      },
+      {
+        signature: '@Remote cancelLogin(connectionId: string): Promise<void>',
+        description: 'Withdraw an outstanding device authorization.',
+        parameters: [{ name: 'connectionId', description: 'saved subscription.' }],
+        returns: 'after the login has stopped.',
+      },
+      {
+        signature: '@Remote logout(connectionId: string): Promise<void>',
+        description: 'Forget the connection\'s subscription credentials.',
+        parameters: [{ name: 'connectionId', description: 'saved subscription.' }],
+        returns: 'after the owned account grant has been removed.',
+      },
+    ],
+  },
+  {
+    key: 'dobeeProviderManager',
+    summary: 'Host provider-management operations; transport adapters expose these through their own namespace.',
+    description: 'Host provider-management operations; transport adapters expose these through their own namespace.',
+    methods: [
+      {
+        signature: 'presets(): ProviderPreset[]',
+        description: 'Read supported provider access categories.',
+        parameters: [],
+        returns: 'preset access categories and endpoint defaults.',
+      },
+      {
+        signature: 'catalog(connectionId: string): Promise<ProviderModel[]>',
+        description: 'Read model metadata without contacting the endpoint.',
+        parameters: [{ name: 'connectionId', description: 'saved connection.' }],
+        returns: 'installed or declared model metadata.',
+      },
+      {
+        signature: 'models(request: ProviderModelsRequest, signal: AbortSignal): Promise<ProviderModel[]>',
+        description: 'Synchronize the endpoint model catalog.',
+        parameters: [{ name: 'request', description: 'staged connection.' }, { name: 'signal', description: 'cancellation.' }],
+        returns: 'live model candidates.',
+      },
+      {
+        signature: 'status(connectionId: string): Promise<SubscriptionStatus>',
+        description: 'Read public subscription account state.',
+        parameters: [{ name: 'connectionId', description: 'subscription connection.' }],
+        returns: 'safe account status.',
+      },
+      {
+        signature: 'login(connectionId: string, signal: AbortSignal): AsyncIterable<SubscriptionLoginFrame>',
+        description: 'Begin subscription authorization for the initiating surface.',
+        parameters: [{ name: 'connectionId', description: 'subscription connection.' }, { name: 'signal', description: 'cancellation.' }],
+        returns: 'public authorization notices.',
+      },
+      {
+        signature: 'cancelLogin(connectionId: string): Promise<void>',
+        description: 'Withdraw an outstanding authorization attempt.',
+        parameters: [{ name: 'connectionId', description: 'subscription connection.' }],
+        returns: 'after login withdrawal.',
+      },
+      {
+        signature: 'logout(connectionId: string): Promise<void>',
+        description: 'Forget the connection-owned subscription grant.',
+        parameters: [{ name: 'connectionId', description: 'subscription connection.' }],
+        returns: 'after credential deletion.',
+      },
+    ],
+  },
+  {
     key: 'fileReferences',
     summary: 'Host capability for cancellable file-reference discovery.',
     description: 'Host capability for cancellable file-reference discovery.',
@@ -6221,6 +6319,22 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type PromptSubmitResult = {\n    text: string;\n    context?: readonly string[];\n    drop?: undefined;\n} | {\n    drop: string;\n    text?: undefined;\n    context?: undefined;\n};',
   },
   {
+    name: 'ProviderKind',
+    declaration: 'export type ProviderKind = \'api\' | \'subscription\';',
+  },
+  {
+    name: 'ProviderModel',
+    declaration: 'export interface ProviderModel {\n    id: string;\n    name?: string;\n    contextWindow?: number;\n    maxTokens?: number;\n    api?: string;\n    input?: (\'text\' | \'image\')[];\n    reasoning?: boolean;\n}',
+  },
+  {
+    name: 'ProviderModelsRequest',
+    declaration: 'export interface ProviderModelsRequest {\n    connectionId?: string;\n    source?: string;\n    baseURL?: string;\n    api?: string;\n    apiKey?: string;\n}',
+  },
+  {
+    name: 'ProviderPreset',
+    declaration: 'export interface ProviderPreset {\n    source: string;\n    kind: ProviderKind;\n    baseURL?: string;\n    api?: string;\n}',
+  },
+  {
     name: 'ProviderRequestId',
     declaration: 'export type ProviderRequestId = Branded<\'ProviderRequestId\'>;',
   },
@@ -7539,6 +7653,14 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'SubprocessTerminalSpawnSpec',
     declaration: 'export interface SubprocessTerminalSpawnSpec {\n    argv: readonly string[];\n    cwd: string;\n    env?: Record<string, string> | undefined;\n    rows: number;\n    cols: number;\n    terminalType: string;\n    shellActivity?: boolean | undefined;\n    graceMs: number;\n    signal?: AbortSignal | undefined;\n}',
+  },
+  {
+    name: 'SubscriptionLoginFrame',
+    declaration: 'export type SubscriptionLoginFrame = {\n    type: \'device-code\';\n    verificationUri: string;\n    userCode: string;\n    expiresAt: number;\n} | {\n    type: \'authorized\';\n    account: string;\n} | {\n    type: \'cancelled\';\n};',
+  },
+  {
+    name: 'SubscriptionStatus',
+    declaration: 'export interface SubscriptionStatus {\n    status: \'signed-out\' | \'signed-in\' | \'expired\';\n    account?: string;\n    expiresAt?: number;\n}',
   },
   {
     name: 'SurfaceEvent',

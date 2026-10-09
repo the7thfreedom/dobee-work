@@ -1,0 +1,55 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/client/dobee-ui-model-providers/README.md
+/:
+  en: 5cfb56402a4b851d
+  zh: 587cc777cd7fa7e2
+/deepseek-ai-dsh-client-dobee-ui-model-providers:
+  en: 1c04267107699efd
+  zh: 764fd15ea6615b12
+/deepseek-ai-dsh-client-dobee-ui-model-providers/summary:
+  en: c60c12d3d26f961f
+  zh: 08d6d8d2e197d61e
+/deepseek-ai-dsh-client-dobee-ui-model-providers/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 3eaa889f39470150
+/deepseek-ai-dsh-client-dobee-ui-model-providers/use-this-package:
+  en: b023b16971fe81ea
+  zh: 7bfb051a53a3a18c
+/deepseek-ai-dsh-client-dobee-ui-model-providers/use-this-package/connections-and-credentials:
+  en: 6ca7b1abb12242dc
+  zh: 7d2a85daeea0b82e
+/deepseek-ai-dsh-client-dobee-ui-model-providers/use-this-package/models-and-default-selection:
+  en: ef28f59b3d21e3ca
+  zh: 9ca18c6dcac60878
+/deepseek-ai-dsh-client-dobee-ui-model-providers/use-this-package/configuration:
+  en: c75e6f0897d68fea
+  zh: 40956460f7a0c783
+/deepseek-ai-dsh-client-dobee-ui-model-providers/understand-the-implementation:
+  en: 85421312cc0cc820
+  zh: 0dac90a8dcc9c603
+/deepseek-ai-dsh-client-dobee-ui-model-providers/further-exploration:
+  en: b05adc0310b0ac95
+  zh: 575f7f23be9bafca
+/deepseek-ai-dsh-client-dobee-ui-model-providers/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/deepseek-ai-dsh-client-dobee-ui-model-providers/model-experience/connection-settings:
+  en: e838f7f903c046ff
+  zh: 1925ecec6ef3045b
+/deepseek-ai-dsh-client-dobee-ui-model-providers/model-experience/connection-settings/what-the-model-sees:
+  en: f0e78a979fcadb68
+  zh: 409d4b001ce1a9a0
+/deepseek-ai-dsh-client-dobee-ui-model-providers/model-experience/connection-settings/token-effect:
+  en: f56d0002da4029c1
+  zh: 2ab47d8d74f8dfe3
+/deepseek-ai-dsh-client-dobee-ui-model-providers/model-experience/connection-settings/kv-cache-effect:
+  en: dc8260eb9284b258
+  zh: 5bfddfef4561322f
+/deepseek-ai-dsh-client-dobee-ui-model-providers/known-limitations-and-deferred-work:
+  en: 204b0dc41220d14b
+  zh: 6a21a4a7b2ee2343
+/deepseek-ai-dsh-client-dobee-ui-model-providers/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 8ec3e73528ddb1a6

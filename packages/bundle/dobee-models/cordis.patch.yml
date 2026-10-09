@@ -1,0 +1,12 @@
+- insert:
+    - id: dobee-model-providers
+      name: '@deepseek-ai/dsh-dobee-model-providers'
+    - id: dobee-model-controller
+      name: '@deepseek-ai/dsh-dobee-model-controller'
+    - id: dobee-ui-model-providers
+      name: '@deepseek-ai/dsh-client-dobee-ui-model-providers'
+
+- id: agent-default-model
+  config:
+    provider: dobee-deepseek
+    model: deepseek-flash

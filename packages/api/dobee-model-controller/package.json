@@ -1,0 +1,32 @@
+{
+  "name": "@deepseek-ai/dsh-dobee-model-controller",
+  "version": "0.2.1-alpha.1",
+  "description": "Dobee API and subscription provider management Remote transport",
+  "type": "module",
+  "license": "MIT",
+  "dependencies": { "zod": "^4.4.3" },
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": { "types": "./lib/types/index.d.ts", "default": "./lib/index.js" },
+    "./src/*": "./src/*",
+    "./typert": { "types": "./lib/typert.host.d.ts", "default": "./lib/typert.host.js" },
+    "./remote": { "types": "./lib/typert.remote-client.d.ts", "default": "./lib/typert.remote-client.js" },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js", "lib/types/**/*.js", "lib/types/**/*.d.ts",
+    "lib/typert.host.js", "lib/typert.host.d.ts",
+    "lib/typert.remote-client.js", "lib/typert.remote-client.d.ts"
+  ],
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/dsh-typert-protocol": "workspace:*",
+    "@deepseek-ai/dsh-dobee-model-providers": "workspace:*"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/dsh-typert-protocol": "workspace:*",
+    "@deepseek-ai/dsh-dobee-model-providers": "workspace:*"
+  }
+}

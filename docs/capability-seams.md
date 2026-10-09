@@ -7,6 +7,11 @@ A service can be a core spine service, a swappable capability seam, a bundle/com
 
 ```mermaid
 flowchart LR
+  pkg_dobee_model_providers["dobee-model-providers"]
+  svc_dobeeProviderManager["ctx.dobeeProviderManager<br/>Dobee API and subscription provider management"]
+  pkg_dobee_model_controller["dobee-model-controller"]
+  svc_dobeeModels["ctx.dobeeModels<br/>Dobee provider management Remote transport"]
+  pkg_client_dobee_ui_model_providers["client-dobee-ui-model-providers"]
   pkg_hmr["hmr"]
   svc_hmr["ctx.hmr<br/>Serialized module and configuration reloads"]
   pkg_app_boot["app-boot"]
@@ -316,6 +321,8 @@ flowchart LR
   pkg_deepseek_account --> svc_deepseekAccount
   pkg_deepseek_account_platform --> svc_deepseekAccount
   pkg_deepseek_llm_api_extensions --> svc_deepseekLlmApiExtensions
+  pkg_dobee_model_controller --> svc_dobeeModels
+  pkg_dobee_model_providers --> svc_dobeeProviderManager
   pkg_experimental_agent_team --> svc_agentTeams
   pkg_experimental_api_speech_to_text --> svc_speechController
   pkg_experimental_browser_use_chrome_devtools_mcp --> svc_browserUse
@@ -459,6 +466,8 @@ flowchart LR
   svc_deepseekAccount --> pkg_llm_deepseek
   svc_deepseekLlmApiExtensions --> pkg_llm_deepseek
   svc_directoryPicker --> pkg_api_workspace_controller
+  svc_dobeeModels --> pkg_client_dobee_ui_model_providers
+  svc_dobeeProviderManager --> pkg_dobee_model_controller
   svc_dynamicCordisRunner --> pkg_tool_cordis
   svc_fileReferences --> pkg_api_session_controller
   svc_fileUploads --> pkg_api_session_controller
@@ -571,6 +580,8 @@ flowchart LR
 
 | ctx key | Role | Owner | Implementations | Direct consumers | Companion plugins | Note |
 | --- | --- | --- | --- | --- | --- | --- |
+| `ctx.dobeeProviderManager` | `core` | [`dobee-model-providers`](../packages/llm/dobee-model-providers) | - | [`dobee-model-controller`](../packages/api/dobee-model-controller) | - | Owns provider defaults, endpoint model synchronization, and connection-scoped subscription authorization. |
+| `ctx.dobeeModels` | `core` | [`dobee-model-controller`](../packages/api/dobee-model-controller) | - | [`client-dobee-ui-model-providers`](../packages/client/dobee-ui-model-providers) | - | Exposes model metadata and public device-login notices without returning credential values. |
 | `ctx.hmr` | `core` | [`hmr`](../packages/boot/hmr) | - | [`app-boot`](../packages/boot/app-boot) | - | Owns module and exact configuration watchers; application mutations share its queue and automatic reloads await the application file lock. |
 | `ctx.pluginRegistryProbe` | `core` | [`client-ui-plugin-manager`](../packages/client/ui-plugin-manager) | - | [`client-ui-plugin-manager`](../packages/client/ui-plugin-manager) | - | Races public registry responses on the Host; the Client owns the initial registry recommendation. |
 | `ctx.pluginManager` | `core` | [`plugin-manager`](../packages/boot/plugin-manager) | - | [`plugin-manager`](../packages/boot/plugin-manager), `ui-settings-plugin-inventory` | - | Shares profile package operations with the CLI and reports persisted and running state to Web and agent callers. |

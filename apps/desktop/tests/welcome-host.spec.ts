@@ -4,7 +4,7 @@ import { connectDesktopWelcome } from '../src/welcome-backend.ts'
 
 function transport(preference?: string) {
   const keys = new Map<string, string>()
-  const namespaces = [
+  const namespaces: { ns: string; value: Record<string, unknown> }[] = [
     { ns: 'llm-deepseek', value: { apiKeyEnv: 'CUSTOM_DEEPSEEK_KEY' } },
     { ns: 'llm-pi-ai', value: { profiles: { example: { apiKeyEnv: 'EXAMPLE_API_KEY' } } } },
     { ns: 'locale', value: preference === undefined ? {} : { preference } },
@@ -32,6 +32,40 @@ function transport(preference?: string) {
 const url = 'http://127.0.0.1:19387/?token=fixture'
 
 describe('desktop welcome Web operations', () => {
+  it('stores the native welcome key under the default dobee DeepSeek reference', async () => {
+    const host = transport()
+    host.namespaces.push(
+      { ns: 'agent-default-model', value: { provider: 'dobee-deepseek', model: 'deepseek-flash' } },
+      { ns: 'dobee-model-providers', value: { connections: { deepseek: { source: 'deepseek', apiKeyEnv: 'DOBEE_DEEPSEEK_API_KEY' } } } },
+    )
+    const backend = await connectDesktopWelcome(url, host.send)
+    expect(await backend.save('local-fixture-key')).toEqual({ ok: true })
+    expect(host.keys.get('DOBEE_DEEPSEEK_API_KEY')).toBe('local-fixture-key')
+    expect(host.keys.has('CUSTOM_DEEPSEEK_KEY')).toBe(false)
+    expect(await backend.read()).toMatchObject({ hasApiKey: true, writable: true })
+  })
+
+  it('retains the official welcome reference when the official route is selected', async () => {
+    const host = transport()
+    host.namespaces.push(
+      { ns: 'agent-default-model', value: { provider: 'deepseek-official', model: 'deepseek-flash' } },
+      { ns: 'dobee-model-providers', value: { connections: { deepseek: { source: 'deepseek', apiKeyEnv: 'DOBEE_DEEPSEEK_API_KEY' } } } },
+    )
+    const backend = await connectDesktopWelcome(url, host.send)
+    expect(await backend.save('local-fixture-key')).toEqual({ ok: true })
+    expect(host.keys.get('CUSTOM_DEEPSEEK_KEY')).toBe('local-fixture-key')
+    expect(host.keys.has('DOBEE_DEEPSEEK_API_KEY')).toBe(false)
+  })
+
+  it('refuses a broken dobee default rather than writing the key into the official route', async () => {
+    const host = transport()
+    host.namespaces.push({ ns: 'agent-default-model', value: { provider: 'dobee-deepseek' } })
+    const backend = await connectDesktopWelcome(url, host.send)
+    expect(await backend.save('local-fixture-key')).toEqual({ ok: false })
+    expect(host.keys.size).toBe(0)
+    await expect(backend.read()).rejects.toThrow('missing default dobee DeepSeek credential reference')
+  })
+
   it('authenticates through Web and stores only through the configured credential reference', async () => {
     const host = transport()
     const backend = await connectDesktopWelcome(url, host.send)

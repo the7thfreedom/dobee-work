@@ -108,6 +108,22 @@ const GROUP_ORDER = [
 
 const SERVICE_ROLES: ServiceRole[] = [
   {
+    key: 'dobeeProviderManager',
+    pkg: 'dobee-model-providers',
+    title: 'Dobee API and subscription provider management',
+    mode: 'core',
+    consumers: ['dobee-model-controller'],
+    note: 'Owns provider defaults, endpoint model synchronization, and connection-scoped subscription authorization.',
+  },
+  {
+    key: 'dobeeModels',
+    pkg: 'dobee-model-controller',
+    title: 'Dobee provider management Remote transport',
+    mode: 'core',
+    consumers: ['client-dobee-ui-model-providers'],
+    note: 'Exposes model metadata and public device-login notices without returning credential values.',
+  },
+  {
     key: 'hmr',
     pkg: 'hmr',
     title: 'Serialized module and configuration reloads',

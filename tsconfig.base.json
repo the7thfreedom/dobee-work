@@ -28,6 +28,9 @@
     // not declaration path aliases, keep each package/vendor source compiled
     // under its own tsconfig boundary.
     "paths": {
+      "@deepseek-ai/dsh-dobee-model-providers/types": ["./packages/llm/dobee-model-providers/src/types.ts"],
+      "@deepseek-ai/dsh-client-dobee-ui-model-providers": ["./packages/client/dobee-ui-model-providers/src/index.ts"],
+      "@deepseek-ai/dsh-client-dobee-ui-model-providers/client": ["./packages/client/dobee-ui-model-providers/src/client/index.ts"],
       "@deepseek-ai/dsh-client-product-analytics": ["./packages/client/product-analytics/src/index.ts"],
       "@deepseek-ai/dsh-client-product-analytics/types": ["./packages/client/product-analytics/src/events.ts"],
       "@deepseek-ai/dsh-client-product-analytics/client": ["./packages/client/product-analytics/src/client/index.ts"],
@@ -368,6 +371,9 @@
       "@deepseek-ai/dsh-credentials-local": ["./packages/credentials/credentials-local/src"],
       "@deepseek-ai/dsh-deepseek-llm-api-extensions": ["./packages/llm/deepseek-llm-api-extensions/src"],
       "@deepseek-ai/dsh-deque": ["./packages/util/deque/src"],
+      "@deepseek-ai/dsh-dobee-model-controller": ["./packages/api/dobee-model-controller/src"],
+      "@deepseek-ai/dsh-dobee-model-providers": ["./packages/llm/dobee-model-providers/src"],
+      "@deepseek-ai/dsh-dobee-models": ["./packages/bundle/dobee-models/src"],
       "@deepseek-ai/dsh-file-reference": ["./packages/context/file-reference/src"],
       "@deepseek-ai/dsh-file-reference-local": ["./packages/context/file-reference-local/src"],
       "@deepseek-ai/dsh-fs": ["./packages/fs/fs/src"],
