@@ -1,0 +1,46 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/llm/dobee-model-providers/README.md
+/:
+  en: 69cd32b1e7e88dc3
+  zh: 22d9ad2204db11b6
+/deepseek-ai-dsh-dobee-model-providers:
+  en: eca1675b85d5d3cb
+  zh: 99b40f59bb6a2594
+/deepseek-ai-dsh-dobee-model-providers/summary:
+  en: 406aa774495dade6
+  zh: 4e9d09785ecff62e
+/deepseek-ai-dsh-dobee-model-providers/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 2a86c3426347f5ce
+/deepseek-ai-dsh-dobee-model-providers/use-this-package:
+  en: 21744b841f5b71b0
+  zh: 77f11054f67dcc2d
+/deepseek-ai-dsh-dobee-model-providers/understand-the-implementation:
+  en: 5ecb19b439529561
+  zh: 39cac35d8c60b94e
+/deepseek-ai-dsh-dobee-model-providers/further-exploration:
+  en: 61c9f766dcd84d16
+  zh: 770b91a6c73d28fc
+/deepseek-ai-dsh-dobee-model-providers/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/deepseek-ai-dsh-dobee-model-providers/model-experience/provider-requests:
+  en: 57c2662564eaa4f6
+  zh: b616bbb8a5bf9ce4
+/deepseek-ai-dsh-dobee-model-providers/model-experience/provider-requests/what-the-model-sees:
+  en: 9468f5e82781ce08
+  zh: 89d818a1b991a03e
+/deepseek-ai-dsh-dobee-model-providers/model-experience/provider-requests/token-effect:
+  en: 49760e1e01a7794c
+  zh: e66a48f77f4164af
+/deepseek-ai-dsh-dobee-model-providers/model-experience/provider-requests/kv-cache-effect:
+  en: 9bc2c8b5d7de9f1d
+  zh: 4af94560b23d3307
+/deepseek-ai-dsh-dobee-model-providers/known-limitations-and-deferred-work:
+  en: 2cdc279fc6b5af21
+  zh: aaccd941a07a9888
+/deepseek-ai-dsh-dobee-model-providers/known-limitations-and-deferred-work/dev-note:
+  en: 0a1253c6f7b5e8b9
+  zh: 9f56528562c7c914

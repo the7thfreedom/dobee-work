@@ -50,6 +50,8 @@ export { REGION_BEGIN, REGION_END }
  * errors, so the partition can never silently drift from the service API.
  */
 export const SERVICE_PAGE: Record<string, string> = {
+  dobeeProviderManager: 'llm-streaming.md',
+  dobeeModels: 'llm-streaming.md',
   speechToText: 'voice-input.md',
   speechController: 'voice-input.md',
   otel: 'otel.md',
@@ -276,6 +278,11 @@ export const EVENT_WALK_EXEMPTIONS: Record<string, string> = {
  * appear on more than one page.
  */
 export const LINK_MAP: Readonly<Record<string, string>> = {
+  ProviderPreset: 'llm-streaming.md',
+  ProviderModel: 'llm-streaming.md',
+  ProviderModelsRequest: 'llm-streaming.md',
+  SubscriptionStatus: 'llm-streaming.md',
+  SubscriptionLoginFrame: 'llm-streaming.md',
   EventLogOptions: 'otel.md',
   EventLogReporter: 'otel.md',
   SessionLogOptions: 'otel.md',

@@ -1,0 +1,18 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": { "rootDir": "src", "outDir": "lib/types" },
+  "include": ["src"],
+  "references": [
+    { "path": "../../../vendor/cordis" },
+    { "path": "../../../vendor/schemastery" },
+    { "path": "../../util/brand" },
+    { "path": "../../util/values" },
+    { "path": "../../../vendor/loader" },
+    { "path": "../../typert/protocol" },
+    { "path": "../llm" },
+    { "path": "../../credentials/credentials" },
+    { "path": "../../settings/settings" },
+    { "path": "../../attachment/attachment" },
+    { "path": "../../fs/fs" }
+  ]
+}

@@ -784,6 +784,10 @@ interface LlmCallConfigAdapterDefaults {
 
 [协议参考](../deepseek-llm-api-wire-extensions.zh.md)定义确切的请求标头、扩展事务、字段版本和接收方义务。随附组合会将 [`dsh_session_log`](../../packages/session/session-log-deepseek/README.zh.md) 注册为无损增量权威日志后缀，并将 [`dsh_plugin_packages`](../../packages/llm/plugin-package-inventory-deepseek/README.zh.md) 注册为完整存活 Loader 包集合。这些字段仍位于模型消息之外，也不会进入 pi-ai 适配器路径。
 
+## Dobee 服务商管理
+
+`ctx.dobeeProviderManager` 管理 API 密钥和订阅服务商；`ctx.dobeeModels` 提供已认证的 Remote 方法。`ProviderPreset` 描述来源的 API 或订阅类别及默认端点。`ProviderModelsRequest` 携带已保存连接标识，或草稿端点及只写密钥。`ProviderModel` 返回请求标识和已披露模型能力。`SubscriptionStatus` 包含未登录、已登录或过期状态及公开账号信息。`SubscriptionLoginFrame` 流式发送设备指引、授权或取消结果，不发送令牌。[服务商包](../../packages/llm/dobee-model-providers/README.zh.md) 拥有认证和模型列表行为。
+
 ## 服务与提供方约定
 
 `LlmAdapter` 是提供方约定：创建子类、实现 `stream()`，再用 `ctx.llm.registerAdapter(providers, adapter)` 注册一个适配器实例。`GenerateOptions.provider` 选择已注册适配器；`GenerateOptions.model` 会传给该适配器，无需在生命周期启动时注册。重复提供方路由会原子失败。可选的 `providerRetryPolicy()` 会按路由捕获并填入 normal 默认值，`providerInfo()` 与异步 `listModels()` 方法则为 `LlmRuntime.listProviders()` / `listModels()` 提供分离的 selector 元数据。该目录仅供参考，不是请求白名单：适配器仍是权威，并可接受未列出的模型 id。单次异步 `resolveModel()` 查询返回确切模型身份，以及可选的对正确性敏感的上下文容量、适配器配置的 `defaultMaxTokens`、由模型持有的有序推理强度 ID 和可选的部署默认值；字段缺失表示元数据不可用或保留提供方持有的行为，而不表示目录成员关系无效。解析器会接收可选的取消信号，并且必须在信号中止后迅速完成结算。`LlmRuntime.resolveModelInfo()` 会校验聚合结果并返回分离值。在最终适配器边界，`resolveCallConfig()` 仅在 `maxTokens` 缺失时填入输出默认值，并校验和填入推理强度，因此直接调用也无法绕过任何一项已配置行为；直接分派会在等待解析前捕获一项适配器注册。agent loop 则使用 `prepareCall()`，使模型解析、请求头持久记录和分派全程使用同一项注册，保留来自同一次查询的分离上下文元数据，并报告适配器填入的配置字段。适配器查找发生在 `llm/stream` waterfall 的终端 continuation，因此 listener 可以在查找前短路调用，或路由一个可变的一次性请求。AgentLoop 在外层 waterfall 返回流句柄时观察到一次请求尝试；这个有限边界不能证明惰性终端适配器已构造完成或开始提供方 I/O。`block-start` / `block-end` 的 `index` 关联与 assembler 共同意味着适配器只需 emit 格式正确的分片——块重组不是每个适配器各自的问题。`ctx.llm.stream()` 与 `llm/stream` waterfall 在一个轮次中的位置见 [architecture.md](../architecture.zh.md#turn-flow)。
@@ -924,6 +928,124 @@ async prepare(request: DeepSeekLlmApiExtensionRequest): Promise<PreparedDeepSeek
 ```
 
 Source: [`packages/llm/deepseek-llm-api-extensions/src/index.ts`](../../packages/llm/deepseek-llm-api-extensions/src/index.ts)
+
+<a id="ctxdobeemodels--dobeemodelscontroller"></a>
+
+### `ctx.dobeeModels` — `DobeeModelsController`
+
+Exposes the Host provider manager through an independently generated transport.
+
+```ts cordis-catalog
+/** Read supported provider access categories.
+ * @returns API and subscription presets with default endpoints.
+ */
+@Remote presets(): ProviderPreset[]
+
+/**
+ * Read the provider's local catalog without a network request.
+ * @param connectionId - saved provider.
+ * @returns local model metadata without endpoint I/O.
+ */
+@Remote catalog(connectionId: string): Promise<ProviderModel[]>
+
+/**
+ * Synchronize the provider's live model catalog.
+ * @param request - staged endpoint facts.
+ * @param signal - caller cancellation.
+ * @returns live endpoint model candidates.
+ */
+@Remote models(request: ProviderModelsRequest, signal: AbortSignal): Promise<ProviderModel[]>
+
+/**
+ * Read public subscription account state.
+ * @param connectionId - saved subscription.
+ * @returns safe account metadata without any tokens.
+ */
+@Remote status(connectionId: string): Promise<SubscriptionStatus>
+
+/**
+ * Start account authorization for the initiating client.
+ * @param connectionId - saved subscription.
+ * @param signal - caller cancellation.
+ * @returns public device-login notices.
+ */
+@Remote({ mode: 'stream' }) async *login(connectionId: string, signal: AbortSignal): AsyncIterable<SubscriptionLoginFrame>
+
+/**
+ * Withdraw an outstanding device authorization.
+ * @param connectionId - saved subscription.
+ * @returns after the login has stopped.
+ */
+@Remote cancelLogin(connectionId: string): Promise<void>
+
+/**
+ * Forget the connection's subscription credentials.
+ * @param connectionId - saved subscription.
+ * @returns after the owned account grant has been removed.
+ */
+@Remote logout(connectionId: string): Promise<void>
+```
+
+Source: [`packages/api/dobee-model-controller/src/index.ts`](../../packages/api/dobee-model-controller/src/index.ts)
+
+<a id="ctxdobeeprovidermanager--providermanager"></a>
+
+### `ctx.dobeeProviderManager` — `ProviderManager`
+
+Host provider-management operations; transport adapters expose these through their own namespace.
+
+```ts cordis-catalog
+/** Read supported provider access categories.
+ * @returns preset access categories and endpoint defaults.
+ */
+presets(): ProviderPreset[]
+
+/**
+ * Read model metadata without contacting the endpoint.
+ * @param connectionId - saved connection.
+ * @returns installed or declared model metadata.
+ */
+catalog(connectionId: string): Promise<ProviderModel[]>
+
+/**
+ * Synchronize the endpoint model catalog.
+ * @param request - staged connection.
+ * @param signal - cancellation.
+ * @returns live model candidates.
+ */
+models(request: ProviderModelsRequest, signal: AbortSignal): Promise<ProviderModel[]>
+
+/**
+ * Read public subscription account state.
+ * @param connectionId - subscription connection.
+ * @returns safe account status.
+ */
+status(connectionId: string): Promise<SubscriptionStatus>
+
+/**
+ * Begin subscription authorization for the initiating surface.
+ * @param connectionId - subscription connection.
+ * @param signal - cancellation.
+ * @returns public authorization notices.
+ */
+login(connectionId: string, signal: AbortSignal): AsyncIterable<SubscriptionLoginFrame>
+
+/**
+ * Withdraw an outstanding authorization attempt.
+ * @param connectionId - subscription connection.
+ * @returns after login withdrawal.
+ */
+cancelLogin(connectionId: string): Promise<void>
+
+/**
+ * Forget the connection-owned subscription grant.
+ * @param connectionId - subscription connection.
+ * @returns after credential deletion.
+ */
+logout(connectionId: string): Promise<void>
+```
+
+Source: [`packages/llm/dobee-model-providers/src/types.ts`](../../packages/llm/dobee-model-providers/src/types.ts)
 
 <a id="ctxllm--llmruntime"></a>
 

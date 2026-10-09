@@ -825,6 +825,85 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@deepseek-ai/dsh-deepseek-account-platform -->
 
+<!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-dobee-model-providers -->
+<a id="deepseek-aidsh-dobee-model-providers"></a>
+
+## `@deepseek-ai/dsh-dobee-model-providers`
+
+- `inject`: `llm` · `credentials`
+- `refs`: `Volatile` (`@deepseek-ai/cordis`)
+- `source`: [`packages/llm/dobee-model-providers/src/config.ts:61`](../packages/llm/dobee-model-providers/src/config.ts)
+
+```ts config-catalog
+/** Live configuration for independent dobee connections. */
+export interface Config {
+  /** Connection ids become registered routes prefixed with `dobee-`. */
+  connections: Volatile<Record<string, ConnectionConfig>>
+  /** GitHub Copilot public device-authorization client; deployments may select their registered client. */
+  copilotClientId: string
+  /** Maximum duration of a user-initiated device authorization. */
+  loginTimeoutMs: number
+  /** Per-request timeout for authorization and model catalog requests. */
+  authRequestTimeoutMs: number
+  /** Refresh short-lived subscription credentials before their expiration. */
+  tokenRefreshGraceMs: number
+  /** Maximum model-list pages accepted from one synchronization. */
+  maxModelPages: number
+}
+
+/** One independent connection to a native provider or compatible endpoint. */
+export interface ConnectionConfig {
+  /** API-key access or subscription account authentication. */
+  kind?: ProviderKind
+  /** Whether the connection is offered for model calls. */
+  enabled?: boolean
+  /** Selected model ids; null or omission selects the complete catalog. */
+  enabledModels?: readonly string[] | null
+  /** Native provider or dobee preset identifier. */
+  source?: string
+  /** Connection label in model pickers. */
+  displayName?: string
+  /** Explicit compatible protocol; omission preserves native dispatch. */
+  api?: string
+  /** Endpoint override. */
+  baseURL?: string
+  /** Credential reference; never a secret value. */
+  apiKeyEnv?: string
+  /** Explicit catalog replacing the source catalog. */
+  models?: readonly ModelConfig[]
+  /** Per-request timeout in milliseconds. */
+  timeoutMs?: number
+  /** Pixel budget for each normalized image. */
+  imagePixelBudget?: number
+  /** Encoded-byte target for each request image. */
+  imageMaxBytes?: number
+  /** Aggregate base64 image payload limit. */
+  maxRequestImageBytes?: number
+}
+
+/** User-facing provider access category. */
+export type ProviderKind = 'api' | 'subscription'
+
+/** One explicit model; absent properties inherit matching native catalog metadata. */
+export interface ModelConfig {
+  /** Exact upstream model identifier. */
+  id: string
+  /** Optional display name. */
+  name?: string
+  /** Combined input and output token capacity. */
+  contextWindow?: number
+  /** Maximum output tokens. */
+  maxTokens?: number
+  /** Accepted input modalities. */
+  input?: readonly ('text' | 'image')[]
+  /** Whether the model accepts reasoning controls. */
+  reasoning?: boolean
+  /** Model-specific protocol for mixed-protocol provider catalogs. */
+  api?: string
+}
+```
+<!-- END GENERATED config-catalog:@deepseek-ai/dsh-dobee-model-providers -->
+
 <!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-experimental-agent-team -->
 <a id="deepseek-aidsh-experimental-agent-team"></a>
 
@@ -4351,6 +4430,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@deepseek-ai/dsh-api-remotes` | `typertGateway` | [`packages/api/remotes/src/index.ts`](../packages/api/remotes/src/index.ts) |
 | `@deepseek-ai/dsh-authorization` | `credentials` | [`packages/credentials/authorization/src/index.ts`](../packages/credentials/authorization/src/index.ts) |
 | `@deepseek-ai/dsh-browser-use` | — | [`packages/browser-use/browser-use/src/index.ts`](../packages/browser-use/browser-use/src/index.ts) |
+| `@deepseek-ai/dsh-client-dobee-ui-model-providers` | — | [`packages/client/dobee-ui-model-providers/src/index.ts`](../packages/client/dobee-ui-model-providers/src/index.ts) |
 | `@deepseek-ai/dsh-client-file-upload` | `agents` · `attachments` · `commands` · `connection` | [`packages/client/file-upload/src/index.ts`](../packages/client/file-upload/src/index.ts) |
 | `@deepseek-ai/dsh-client-locale` | — | [`packages/client/locale/src/index.ts`](../packages/client/locale/src/index.ts) |
 | `@deepseek-ai/dsh-client-modules` | `loader` | [`packages/client/modules/src/index.ts`](../packages/client/modules/src/index.ts) |
@@ -4410,6 +4490,8 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@deepseek-ai/dsh-config-editor` | `loader` · `profileContext` | [`packages/boot/config-editor/src/index.ts`](../packages/boot/config-editor/src/index.ts) |
 | `@deepseek-ai/dsh-cordis-client-runner` | — | [`packages/extensions/cordis-client-runner/src/index.ts`](../packages/extensions/cordis-client-runner/src/index.ts) |
 | `@deepseek-ai/dsh-deepseek-llm-api-extensions` | — | [`packages/llm/deepseek-llm-api-extensions/src/index.ts`](../packages/llm/deepseek-llm-api-extensions/src/index.ts) |
+| `@deepseek-ai/dsh-dobee-model-controller` | `dobeeProviderManager` | [`packages/api/dobee-model-controller/src/index.ts`](../packages/api/dobee-model-controller/src/index.ts) |
+| `@deepseek-ai/dsh-dobee-models` | — | [`packages/bundle/dobee-models/src/index.ts`](../packages/bundle/dobee-models/src/index.ts) |
 | `@deepseek-ai/dsh-experimental-auto-review` | `approval` · `llm` · `permissionPresets` · `sessions` · `tools` | [`packages/experimental/auto-review/src/index.ts`](../packages/experimental/auto-review/src/index.ts) |
 | `@deepseek-ai/dsh-experimental-client-ui-agent-team` | — | [`packages/experimental/client-ui-agent-team/src/index.ts`](../packages/experimental/client-ui-agent-team/src/index.ts) |
 | `@deepseek-ai/dsh-experimental-client-ui-claude-code-mods` | — | [`packages/experimental/client-ui-claude-code-mods/src/index.ts`](../packages/experimental/client-ui-claude-code-mods/src/index.ts) |

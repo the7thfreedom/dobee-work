@@ -1,0 +1,31 @@
+# Bilingual-pair consistency record for dobee-model-providers.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/discussion/dobee-model-providers.md
+/dobee-model-providers-implementation-plan:
+  en: 85f6e22524e437e5
+  zh: 4307ec57d24fd65f
+/dobee-model-providers-implementation-plan/summary:
+  en: 11dfe387a7b91602
+  zh: 3bddae926711f0c8
+/dobee-model-providers-implementation-plan/table-of-contents:
+  en: 4de9be3151b2742d
+  zh: 9b3d0422622a5ea6
+/dobee-model-providers-implementation-plan/runtime:
+  en: 3f5ed0d448ee3d8b
+  zh: 821895a64f636b0f
+/dobee-model-providers-implementation-plan/provider-coverage:
+  en: 7d0db56c12dfcc26
+  zh: 88d53693d8a6a901
+/dobee-model-providers-implementation-plan/user-interface:
+  en: a1e332d255fb43b4
+  zh: 71815240949b9f6b
+/dobee-model-providers-implementation-plan/default-composition:
+  en: 626c6e8ddbd4af73
+  zh: 70b4ba5a22f1d221
+/dobee-model-providers-implementation-plan/acceptance:
+  en: 4dbca6dafbcd9e54
+  zh: 0e6f0a664466dfa9
+/dobee-model-providers-implementation-plan/dev-note:
+  en: a9550599251acdcc
+  zh: baeef2410b53f659

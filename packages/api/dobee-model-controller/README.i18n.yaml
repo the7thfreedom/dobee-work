@@ -1,0 +1,46 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/api/dobee-model-controller/README.md
+/:
+  en: 8fac1e5a52e45ee7
+  zh: a642e3ebf2c34be3
+/deepseek-ai-dsh-dobee-model-controller:
+  en: 0e3680c02822bd4a
+  zh: 6578434959b1a513
+/deepseek-ai-dsh-dobee-model-controller/summary:
+  en: 58cb2b5a2d26d7ad
+  zh: 59d9b6160ef0ffce
+/deepseek-ai-dsh-dobee-model-controller/table-of-contents:
+  en: 23386452a66b2fbd
+  zh: 25a6e82e0fea7311
+/deepseek-ai-dsh-dobee-model-controller/use-this-package:
+  en: eb27757afbcb4bf5
+  zh: 464cc9caa50ee720
+/deepseek-ai-dsh-dobee-model-controller/understand-the-implementation:
+  en: 77b3ce282118a277
+  zh: c8d97679b16be4e9
+/deepseek-ai-dsh-dobee-model-controller/further-exploration:
+  en: 2ff8a4e8c6847b5d
+  zh: 3ffd1a5db847cb22
+/deepseek-ai-dsh-dobee-model-controller/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/deepseek-ai-dsh-dobee-model-controller/model-experience/provider-management:
+  en: 7d7e10ba01d1c8fd
+  zh: d38c69c5021752f8
+/deepseek-ai-dsh-dobee-model-controller/model-experience/provider-management/what-the-model-sees:
+  en: ce3e4ad8af764512
+  zh: a75668cdb8c61ca6
+/deepseek-ai-dsh-dobee-model-controller/model-experience/provider-management/token-effect:
+  en: ec71764d944e985d
+  zh: f5e38df85690e2ad
+/deepseek-ai-dsh-dobee-model-controller/model-experience/provider-management/kv-cache-effect:
+  en: 6d10732443caaf8d
+  zh: b3ff5a5c55d7434e
+/deepseek-ai-dsh-dobee-model-controller/known-limitations-and-deferred-work:
+  en: 3c63ec8470453922
+  zh: d865c486098373d7
+/deepseek-ai-dsh-dobee-model-controller/known-limitations-and-deferred-work/dev-note:
+  en: 0a1253c6f7b5e8b9
+  zh: 9f56528562c7c914

@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v0.2.1-alpha.1/dobee-default-models/guide.md
+/:
+  en: 7c546c4c267ea073
+  zh: 04285e5264b5e14e
+/dobee-desktop-default-model-providers:
+  en: 8f17881b67bc5758
+  zh: 43968086fa42f6f4
+/dobee-desktop-default-model-providers/change:
+  en: ec3451aa5dfd9d16
+  zh: 1181331c3221181a
+/dobee-desktop-default-model-providers/migration:
+  en: 5b70b634d5ecebd6
+  zh: af673af5c49e176c
