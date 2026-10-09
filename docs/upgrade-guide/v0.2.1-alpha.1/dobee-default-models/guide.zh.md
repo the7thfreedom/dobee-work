@@ -13,6 +13,6 @@ Dobee Desktop 在上游 Web bundle 之外加载 dobee 模型 bundle。bundle 层
 
 ## 迁移
 
-1. 打开 dobee 模型设置页，为 DeepSeek 连接配置凭据，或创建其他连接并选择默认模型。
+1. 使用原生欢迎页的稍后配置操作，然后打开 dobee 模型设置页，为 DeepSeek 连接配置凭据，或创建其他连接并选择默认模型。原生表单仍配置官方服务商，不写入 `DOBEE_DEEPSEEK_API_KEY`。
 2. 如需保留官方路由，在 Desktop profile 的 `cordis.patch.yml` 中保留或设置 `agent-default-model` 为 `provider: deepseek-official` 和 `model: deepseek-flash`。
 3. 创建会话并确认输入区显示预期服务商和模型。使用已获授权的密钥验证请求；仅配置密钥不代表推理可用。

@@ -23,7 +23,7 @@ Use dobee model connections and their settings page in Desktop. This bundle adds
 <a id="use-this-package"></a>
 ## Use this package
 
-Dobee Desktop includes this bundle after the upstream Web bundles. Configure the DeepSeek connection in the dobee settings page or select another configured default. The initial connection references `DOBEE_DEEPSEEK_API_KEY`; native welcome key entry writes that reference when this route is the default. Existing official model routes remain mounted for historical sessions.
+Dobee Desktop includes this bundle after the upstream Web bundles. Configure the DeepSeek connection in the dobee settings page or select another configured default. The initial connection references `DOBEE_DEEPSEEK_API_KEY`. The upstream native welcome form configures the official provider, not dobee; use its existing configure-later action to reach the dobee settings page. Existing official model routes remain mounted for historical sessions.
 
 <a id="understand-the-implementation"></a>
 ## Understand the implementation

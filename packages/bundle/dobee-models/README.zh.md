@@ -23,7 +23,7 @@ kind: "package-bundle"
 <a id="use-this-package"></a>
 ## 使用此包
 
-Dobee Desktop 在上游 Web bundle 之后加载此 bundle。在 dobee 设置页配置 DeepSeek 连接，或选择其他已配置默认模型。初始连接引用 `DOBEE_DEEPSEEK_API_KEY`；此路由为默认值时，原生欢迎页的密钥输入写入该引用。现有官方模型路由继续挂载以支持历史会话。
+Dobee Desktop 在上游 Web bundle 之后加载此 bundle。在 dobee 设置页配置 DeepSeek 连接，或选择其他已配置默认模型。初始连接引用 `DOBEE_DEEPSEEK_API_KEY`。上游原生欢迎页表单配置官方服务商，不配置 dobee；使用其现有的稍后配置操作进入 dobee 设置页。现有官方模型路由继续挂载以支持历史会话。
 
 <a id="understand-the-implementation"></a>
 ## 理解实现

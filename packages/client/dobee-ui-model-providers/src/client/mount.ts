@@ -8,7 +8,7 @@ import type {} from '@deepseek-ai/dsh-api-remotes/client'
 import type {} from '@deepseek-ai/dsh-dobee-model-controller/remote'
 import type { TypertRemoteContribution } from '@deepseek-ai/dsh-typert-protocol'
 import { Controller, NAMESPACE } from './controller.ts'
-import type { DefaultModel, Settings } from './controller.ts'
+import type { DefaultModel, DobeeProviderSettings } from './controller.ts'
 import { Section, OutcomeToast } from './Section.tsx'
 import type { Face } from './Section.tsx'
 import { en, zh } from './locales.ts'
@@ -29,7 +29,7 @@ function registerUi(ctx: Context): void {
   ctx.effect(() => ctx.locale.register(locale, { en, zh }))
   const t = ctx.locale.bind(locale)
   const controller = new Controller(
-    ctx.configForms.get<Settings>(NAMESPACE),
+    ctx.configForms.get<DobeeProviderSettings>(NAMESPACE),
     ctx.configForms.get<DefaultModel>('agent-default-model'),
     {
       presets: async () => {

@@ -24,7 +24,7 @@ export interface DesktopWelcomeBackend {
   /** @returns The saved UI language without account or provider requests. */
   readLocalePreference(): Promise<string | null>
   /**
-   * @param apiKey - User-entered DeepSeek provider key.
+   * @param apiKey - User-entered official provider key.
    * @returns A safe write outcome without provider diagnostics.
    */
   save(apiKey: string): Promise<{ ok: boolean }>
@@ -72,16 +72,6 @@ export async function connectDesktopWelcome(
   const settingsAndReference = async () => {
     const settings = await invoke({ namespace: 'settings', method: 'describe', args: {} })
     if (!record(settings) || !Array.isArray(settings.namespaces)) throw new Error('desktop welcome: missing settings namespaces')
-    const defaults: unknown = settings.namespaces.find((item: unknown) => record(item) && item.ns === 'agent-default-model')
-    if (record(defaults) && record(defaults.value) && defaults.value.provider === 'dobee-deepseek') {
-      const dobee: unknown = settings.namespaces.find((item: unknown) => record(item) && item.ns === 'dobee-model-providers')
-      const connections = record(dobee) && record(dobee.value) ? dobee.value.connections : undefined
-      const connection = record(connections) ? connections.deepseek : undefined
-      if (!record(connection) || connection.source !== 'deepseek' || typeof connection.apiKeyEnv !== 'string') {
-        throw new Error('desktop welcome: missing default dobee DeepSeek credential reference')
-      }
-      return { settings: { namespaces: settings.namespaces }, ref: connection.apiKeyEnv }
-    }
     const official: unknown = settings.namespaces.find((item: unknown) => record(item) && item.ns === 'llm-deepseek')
     if (official === undefined) return { settings: { namespaces: settings.namespaces }, ref: undefined }
     if (!record(official) || !record(official.value) || typeof official.value.apiKeyEnv !== 'string') {

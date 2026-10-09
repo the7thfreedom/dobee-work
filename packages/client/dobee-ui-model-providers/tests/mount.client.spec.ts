@@ -10,7 +10,7 @@ import { mountProviders, inject } from '../src/client/mount.ts'
 import { apply as hostApply } from '../src/index.ts'
 import { Section } from '../src/client/Section.tsx'
 import type { Face } from '../src/client/Section.tsx'
-import type { DefaultModel, Settings } from '../src/client/controller.ts'
+import type { DefaultModel, DobeeProviderSettings } from '../src/client/controller.ts'
 
 const REMOTE: TypertRemoteContribution = { package: '@deepseek-ai/dsh-dobee-model-controller', descriptors: [] }
 
@@ -36,7 +36,7 @@ async function fixture(fail = false) {
   const ctx = new Context()
   const unmount = vi.fn(async () => {})
   const off = vi.fn()
-  const settings = form<Settings>({ connections: { deepseek: { source: 'deepseek' } } }, off)
+  const settings = form<DobeeProviderSettings>({ connections: { deepseek: { source: 'deepseek' } } }, off)
   const defaults = form<DefaultModel>({ provider: 'old', model: 'old' })
   class Remote extends Service {
     constructor() { super(ctx, 'remote') }

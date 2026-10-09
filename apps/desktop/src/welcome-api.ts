@@ -41,7 +41,7 @@ export interface WelcomeOperations {
   copySignInLink(id: SignInAttemptId): Promise<void>
 
   /**
-   * Store the selected DeepSeek provider's key before entering the workspace.
+   * Store the official provider's key before entering the workspace.
    * @param value - validated, trimmed API key.
    * @returns whether the write completed, without private error details.
    */

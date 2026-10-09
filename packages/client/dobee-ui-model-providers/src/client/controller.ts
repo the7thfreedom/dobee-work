@@ -29,7 +29,7 @@ export type Connection = {
   timeoutMs?: number
 }
 /** Host provider settings. */
-export interface Settings { connections: Record<string, Connection> }
+export interface DobeeProviderSettings { connections: Record<string, Connection> }
 /** Existing default-model namespace. */
 export interface DefaultModel { provider: string; model: string; reasoningEffort?: string }
 /** String-valued capacity fields retain invalid manual additions. */
@@ -227,7 +227,7 @@ export class Controller {
    * @param operations - remote callbacks.
    */
   constructor(
-    private readonly form: ConfigForm<Settings>,
+    private readonly form: ConfigForm<DobeeProviderSettings>,
     private readonly defaults: ConfigForm<DefaultModel>,
     private readonly operations: Operations,
   ) {

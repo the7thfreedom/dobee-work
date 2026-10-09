@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ConfigForm, ConfigFormSnapshot } from '@deepseek-ai/dsh-client-ui-settings/client'
 import type { ProviderPreset } from '@deepseek-ai/dsh-dobee-model-providers/types'
 import { Controller, connectionOf, keyReference, modelDraft, validateDraft } from '../src/client/controller.ts'
-import type { DefaultModel, Draft, LoginStream, Operations, Settings } from '../src/client/controller.ts'
+import type { DefaultModel, DobeeProviderSettings, Draft, LoginStream, Operations } from '../src/client/controller.ts'
 
 const controllers: Controller[] = []
 afterEach(async () => { await Promise.all(controllers.splice(0).map(controller => controller.dispose())) })
@@ -35,7 +35,7 @@ const presets: ProviderPreset[] = [
 ]
 
 async function fixture(overrides: Partial<Operations> = {}) {
-  const settings = form<Settings>({ connections: {
+  const settings = form<DobeeProviderSettings>({ connections: {
     deepseek: { source: 'deepseek', apiKeyEnv: 'SHARED_KEY' },
     work: { source: 'openai', baseURL: 'https://work.example/v1' },
     copilot: { source: 'github-copilot', enabled: false },
@@ -112,7 +112,7 @@ describe('provider draft values', () => {
 describe('provider selection and model lists', () => {
   it('waits for settings before selecting the official saved provider when presets arrive first', async () => {
     const f = await fixture()
-    const settings = form<Settings>({ connections: { deepseek: { source: 'deepseek' } } })
+    const settings = form<DobeeProviderSettings>({ connections: { deepseek: { source: 'deepseek' } } })
     settings.publish({ status: 'loading', value: undefined })
     const controller = new Controller(settings.scope, f.defaults.scope, f.operations)
     controllers.push(controller)
