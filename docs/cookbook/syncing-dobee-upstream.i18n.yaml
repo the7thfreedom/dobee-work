@@ -1,0 +1,28 @@
+# Bilingual-pair consistency record for syncing-dobee-upstream.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/cookbook/syncing-dobee-upstream.md
+/manually-synchronizing-dobee-work-with-upstream:
+  en: d582e4c4d4d02483
+  zh: 4551b39b2883b464
+/manually-synchronizing-dobee-work-with-upstream/summary:
+  en: 41165ad424e54762
+  zh: 2299ca43d04629aa
+/manually-synchronizing-dobee-work-with-upstream/table-of-contents:
+  en: 26dfe6b134b0e502
+  zh: f4c033c53d43f16d
+/manually-synchronizing-dobee-work-with-upstream/repository-setup:
+  en: 98b13df70c3a7516
+  zh: b2305a771da6bc2c
+/manually-synchronizing-dobee-work-with-upstream/manual-synchronization:
+  en: eb2dc4a8d837d96c
+  zh: 567573e6c200a43f
+/manually-synchronizing-dobee-work-with-upstream/conflicts-and-recovery:
+  en: 0b55a3982c90ab55
+  zh: b4231f2ff7197b76
+/manually-synchronizing-dobee-work-with-upstream/landing-and-verification:
+  en: e789da292fc6bd4b
+  zh: 79c4cfe18217f13d
+/manually-synchronizing-dobee-work-with-upstream/dev-note:
+  en: b75c8458928b72b9
+  zh: 003ba4e17b4b5269
