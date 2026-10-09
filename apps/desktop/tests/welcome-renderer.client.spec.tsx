@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { Welcome } from '../src/client/WelcomePage.tsx'
+import * as dobeeWelcome from '../src/client/dobee-welcome.tsx'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { resolveDesktopLocale } from '../src/locale.ts'
 import type { AccountView } from '@deepseek-ai/dsh-deepseek-account/types'
@@ -11,7 +12,7 @@ import type { WelcomeSaveResult, WelcomeNotice } from '../src/welcome-api.ts'
 const html = readFileSync(join(import.meta.dirname, '../renderer/welcome.html'), 'utf8')
 afterEach(cleanup)
 
-function mount(language = 'zh-CN', takeNotice = vi.fn<() => Promise<WelcomeNotice | undefined>>().mockResolvedValue(undefined)) {
+function mount(language = 'zh-CN', takeNotice = vi.fn<() => Promise<WelcomeNotice | undefined>>().mockResolvedValue(undefined), dobee = false) {
   cleanup()
   const stopAccount = vi.fn()
   const api = {
@@ -26,7 +27,7 @@ function mount(language = 'zh-CN', takeNotice = vi.fn<() => Promise<WelcomeNotic
     saveApiKey: vi.fn<(value: string) => Promise<WelcomeSaveResult>>().mockResolvedValue({ ok: true }),
     skip: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
   }
-  const mounted = render(<Welcome api={api} />)
+  const mounted = render(dobee ? dobeeWelcome.apply(api) : <Welcome api={api} />)
   const input = document.querySelector('input')!
   const button = (id: string) => document.querySelector<HTMLButtonElement>(id)!
   const enterKey = (value: string) => {
@@ -36,7 +37,7 @@ function mount(language = 'zh-CN', takeNotice = vi.fn<() => Promise<WelcomeNotic
   const copy = () => {
     const heading = document.querySelector('main')!.getAttribute('aria-labelledby')!
     return [
-      document.title, document.querySelector('img')!.alt, document.getElementById(heading)!.textContent,
+      document.title, screen.getByRole('img').getAttribute('alt') ?? screen.getByRole('img').getAttribute('aria-label'), document.getElementById(heading)!.textContent,
       ...heading === 'welcome-heading' ? [document.querySelector('#welcome-description')!.textContent] : [],
       ...heading === 'key-title' ? [document.querySelector('#key-description')!.textContent, `${input.placeholder} [password]`] : [],
       ...[...document.querySelectorAll('button')].filter(item => item.closest('[hidden]') === null)
@@ -46,6 +47,55 @@ function mount(language = 'zh-CN', takeNotice = vi.fn<() => Promise<WelcomeNotic
   }
   return { document, api, input, button, enterKey, submit, copy, unmount: mounted.unmount, stopAccount }
 }
+
+describe('dobee desktop welcome plugin', () => {
+  it.each(['zh-CN', 'en'])('displays DobeeWork on the %s entry and API-key page', async (language) => {
+    const view = mount(language, undefined, true)
+    expect(dobeeWelcome.name).toBe('dobee-welcome')
+    expect(document.title).toBe('DobeeWork')
+    expect(screen.getByRole('img').textContent).toBe('DobeeWork')
+    expect(document.querySelector('#welcome-heading')!.textContent).toContain('DobeeWork')
+    expect(document.body.textContent).not.toContain('DeepSeek Harness')
+    await expect(view.copy()).toMatchFileSnapshot(`./expected/welcome/dobee-${language}.expected.txt`)
+    fireEvent.click(view.button('#api-key'))
+    await expect(view.copy()).toMatchFileSnapshot(`./expected/welcome/dobee-${language}-api-key.expected.txt`)
+    view.enterKey('  sk-dobee-example  ')
+    view.submit()
+    await vi.waitFor(() => { expect(view.api.saveApiKey).toHaveBeenCalledExactlyOnceWith('sk-dobee-example') })
+    expect(view.api.startSignIn).not.toHaveBeenCalled()
+  })
+
+  it('enters the workspace once without authorizing or saving credentials', async () => {
+    const view = mount('zh-CN', undefined, true)
+    const entered = Promise.withResolvers<undefined>()
+    view.api.skip.mockReturnValue(entered.promise)
+    fireEvent.click(view.button('#sign-in'))
+    fireEvent.click(view.button('#sign-in'))
+    fireEvent.click(view.button('#api-key'))
+    expect(view.api.skip).toHaveBeenCalledOnce()
+    expect(view.api.startSignIn).not.toHaveBeenCalled()
+    expect(view.api.saveApiKey).not.toHaveBeenCalled()
+    expect(view.button('#sign-in').disabled).toBe(true)
+    expect(view.button('#api-key').disabled).toBe(true)
+    expect(document.querySelector<HTMLElement>('#tagline')!.hidden).toBe(false)
+    await act(async () => { entered.resolve(undefined) })
+    view.unmount()
+    const restarted = mount('zh-CN', undefined, true)
+    expect(restarted.button('#sign-in').disabled).toBe(false)
+    expect(restarted.api.skip).not.toHaveBeenCalled()
+  })
+
+  it('shows an entry failure and allows retry without starting account authorization', async () => {
+    const view = mount('zh-CN', undefined, true)
+    view.api.skip.mockRejectedValueOnce(new Error('workspace unavailable'))
+    fireEvent.click(view.button('#sign-in'))
+    expect((await screen.findByRole('alert')).textContent).toBe(view.api.messages.welcomeContinueFailed)
+    await vi.waitFor(() => { expect(view.button('#sign-in').disabled).toBe(false) })
+    fireEvent.click(view.button('#sign-in'))
+    await vi.waitFor(() => { expect(view.api.skip).toHaveBeenCalledTimes(2) })
+    expect(view.api.startSignIn).not.toHaveBeenCalled()
+  })
+})
 
 describe('desktop welcome presentation', () => {
   it.each(['zh-CN', 'en'])('renders the %s entry and API-key step', async (language) => {
