@@ -340,4 +340,15 @@ body {
 #auth-loading:disabled { opacity: 1; }
 .actions .welcome-loading { color: inherit; }
 
+.entry-error {
+  position: absolute;
+  top: 100%;
+  width: 100%;
+  margin: 8px 0 0;
+  color: var(--dsw-alias-label-primary);
+  font-family: var(--dsw-font-family);
+  font-size: 14px;
+  line-height: 22px;
+}
+
 .auth-waiting .copy-link:disabled { cursor: default; }
