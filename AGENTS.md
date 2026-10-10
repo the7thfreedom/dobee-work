@@ -2,7 +2,7 @@
 
 DeepSeek Harness is an all-plugin Cordis agent harness. Read [docs/architecture.md](docs/architecture.md) before changing `packages/`; follow [docs/AGENTS.md](docs/AGENTS.md) for documentation.
 
-For dobee-work upstream updates, follow the [manual synchronization guide](docs/cookbook/syncing-dobee-upstream.md); retain upstream ancestry with merge commits.
+For dobee-work upstream updates, follow the [manual synchronization guide](docs/cookbook/syncing-dobee-upstream.md); retain upstream ancestry with merge commits and run `verify:dobee-customizations` against the pre-sync commit. Review every reported adaptation; never bypass the customization hooks.
 
 **dobee-work customization.** Do not modify upstream plugins. Implement every dobee-work customization as an independent plugin whose name starts with `dobee`.
 

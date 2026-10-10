@@ -10,6 +10,7 @@
 
 - [仓库配置](#repository-setup)
 - [手动同步](#manual-synchronization)
+- [定制保护](#customization-protection)
 - [冲突与恢复](#conflicts-and-recovery)
 - [合入与确认](#landing-and-verification)
 - [开发备注](#dev-note)
@@ -41,6 +42,7 @@ git fetch upstream master
 git fetch origin
 git fetch upstream master
 git switch -c sync/upstream-YYYYMMDD origin/main
+dobee_base=$(git rev-parse HEAD)
 upstream_commit=$(git rev-parse upstream/master)
 git show -s --format='%H %s' "$upstream_commit"
 git show "$upstream_commit:package.json"
@@ -61,16 +63,42 @@ git merge-base --is-ancestor "$upstream_commit" HEAD
 git merge --no-ff --no-commit "$upstream_commit"
 ```
 
-4. 逐项解决冲突，然后按 [dsh-pre-push-checks](../../.agents/skills/dsh-pre-push-checks/SKILL.md) 选择覆盖实际更新的检查。如果依赖声明有变动，使用固定版本的包管理器及冻结锁文件安装依赖。如果有包被删除或重命名，构建前先运行 `pnpm run clean`，移除过期的生成产物。针对 dobee-work 定制和上游破坏性变更运行相关测试，参考[测试指南](../testing.zh.md)和对应版本的升级指南。无法执行的检查必须明确标为未验证。
+4. 逐项解决冲突，暂存已解决的文件，并以 `dobee_base` 为基线运行[定制检查](#customization-protection)，即使 Git 未报告冲突也必须执行。然后按 [dsh-pre-push-checks](../../.agents/skills/dsh-pre-push-checks/SKILL.md) 选择覆盖实际更新的检查。如果依赖声明有变动，使用固定版本的包管理器及冻结锁文件安装依赖。如果有包被删除或重命名，构建前先运行 `pnpm run clean`，移除过期的生成产物。针对 dobee-work 定制和上游破坏性变更运行相关测试，参考[测试指南](../testing.zh.md)和对应版本的升级指南。无法执行的检查必须明确标为未验证。
 
 5. 审阅暂存差异并提交合并。标题可使用 `Merge deepseek-harness <version>`，正文包含 `Source: deepseek-ai/deepseek-harness@<full SHA>` 及要求的共同作者尾注。尽可能将后续本地修复单独提交；冲突解决属于合并提交。
 
 ```bash
 git diff --cached --stat
 git diff --cached --check
+pnpm run verify:dobee-customizations --base "$dobee_base" --upstream "$upstream_commit" --cached
 git commit
 git merge-base --is-ancestor "$upstream_commit" HEAD
 ```
+
+<a id="customization-protection"></a>
+
+## 定制保护
+
+[dobee 定制检查器](../../scripts/dobee-customizations.ts) 从**同步前的提交**中发现路径组件以 `dobee` 开头的受跟踪文件，以及引用 `dobee` 或 `Dobee` 的文本文件，排除 vendor 代码和已归档 Agent Notes。`--upstream` 还会保护相对传入上游提交的共同祖先发生过本地变更的每个文件，包括 CI 开关等没有命名标记的定制。这覆盖独立插件、构建适配器、测试、文档、共享 manifest、profile 和启动器接入，无需维护另一份文件清单。在合并结果中删除引用，不能将文件移出受保护集合。
+
+提交前对已暂存的合并结果执行：
+
+```bash
+pnpm run verify:dobee-customizations --base "$dobee_base" --upstream "$upstream_commit" --cached
+```
+
+受保护文件发生变化就会检查失败，包括 Git 自动合并成功的变化。受保护文件被删除或存在未解决冲突时一律失败。保留本地实现；若需进行兼容上游的适配，先审阅该文件相对 `dobee_base` 的完整差异，运行其行为测试，再用重复的 `--reviewed <path>` 参数逐一确认准确路径。确认只允许已审阅的内容变更，不允许删除；无对应变化的路径或 glob 会失败。在同步 PR 中记录已审阅路径、理由和测试结果。检查器只能检测变化，不能证明行为等价。
+
+例如，审阅适配后的根 manifest 后：
+
+```bash
+pnpm run verify:dobee-customizations --base "$dobee_base" --upstream "$upstream_commit" --cached --reviewed package.json
+DOBEE_SYNC_REVIEWED='["package.json"]' git commit
+```
+
+当 `MERGE_HEAD` 可从已获取的 `refs/remotes/upstream/*` 引用到达时，本地 `pre-commit` 和 `pre-merge-commit` hook 自动检查暂存结果。它们以合并前的 `HEAD` 为基线、`MERGE_HEAD` 为上游目标，并通过 JSON 数组环境变量 `DOBEE_SYNC_REVIEWED` 接收准确的已审阅路径。通过正常依赖安装流程安装 hook，不得跳过。远端合并、绕过 hook 的合并，以及不在已获取上游引用中的发布 tag，仍须执行上述显式命令。PowerShell 用户需为该提交设置 `$env:DOBEE_SYNC_REVIEWED`，随后移除。
+
+构建优化代码保留在 `scripts/dobee-*`，产品行为保留在独立的 `dobee` 插件中，不得移植进上游插件。共享入口在吸收兼容上游变更时，必须保留 Vite 构建脚本、Desktop 运行时范围、watch 启动器、插件注册及 profile/依赖声明。不要添加全局 `ours` 合并属性，它会隐藏传入修复而非审阅适配。构建范围和缓存恢复请遵循[本地开发指南](../development.zh.md#application-commands)。
 
 <a id="conflicts-and-recovery"></a>
 
@@ -93,9 +121,10 @@ git merge-base --is-ancestor "$upstream_commit" HEAD
 ```bash
 git fetch origin
 git merge-base --is-ancestor "$upstream_commit" origin/main
+pnpm run verify:dobee-customizations --base "$dobee_base" --upstream "$upstream_commit"
 ```
 
-退出码 0 表示成功。只有首次连接未经修改的快照时才要求文件树与上游相同；已定制的 dobee-work 分支不需要与上游文件树相同。
+在已发布主分支的干净检出中执行最终定制检查，只重复 PR 中准确的已审阅路径。祖先关系和定制检查均返回退出码 0 才表示成功。只有首次连接未经修改的快照时才要求文件树与上游相同；已定制的 dobee-work 分支不需要与上游文件树相同。
 
 <a id="dev-note"></a>
 

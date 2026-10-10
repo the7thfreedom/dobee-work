@@ -10,6 +10,7 @@ Maintainers update dobee-work from deepseek-harness through ordinary Git merges,
 
 - [Repository setup](#repository-setup)
 - [Manual synchronization](#manual-synchronization)
+- [Customization protection](#customization-protection)
 - [Conflicts and recovery](#conflicts-and-recovery)
 - [Landing and verification](#landing-and-verification)
 - [Dev Note](#dev-note)
@@ -41,6 +42,7 @@ Start with a clean worktree and a published `origin/main` containing the connect
 git fetch origin
 git fetch upstream master
 git switch -c sync/upstream-YYYYMMDD origin/main
+dobee_base=$(git rev-parse HEAD)
 upstream_commit=$(git rev-parse upstream/master)
 git show -s --format='%H %s' "$upstream_commit"
 git show "$upstream_commit:package.json"
@@ -61,16 +63,42 @@ git merge-base --is-ancestor "$upstream_commit" HEAD
 git merge --no-ff --no-commit "$upstream_commit"
 ```
 
-4. Resolve conflicts deliberately, then follow [dsh-pre-push-checks](../../.agents/skills/dsh-pre-push-checks/SKILL.md) for checks covering the actual update. Install dependencies with the pinned package manager and frozen lockfile if dependency manifests changed. When packages are removed or renamed, run `pnpm run clean` before building to remove obsolete generated outputs. Include focused tests for dobee-work customizations and upstream breaking changes; use [testing guidance](../testing.md) and the release's upgrade guides. Unavailable checks must remain explicitly unverified.
+4. Resolve conflicts deliberately, stage the resolved files, and run the [customization guard](#customization-protection) against `dobee_base`, even when Git reports no conflicts. Then follow [dsh-pre-push-checks](../../.agents/skills/dsh-pre-push-checks/SKILL.md) for checks covering the actual update. Install dependencies with the pinned package manager and frozen lockfile if dependency manifests changed. When packages are removed or renamed, run `pnpm run clean` before building to remove obsolete generated outputs. Include focused tests for dobee-work customizations and upstream breaking changes; use [testing guidance](../testing.md) and the release's upgrade guides. Unavailable checks must remain explicitly unverified.
 
 5. Review the staged diff and commit the merge. Use a title such as `Merge deepseek-harness <version>`, a body containing `Source: deepseek-ai/deepseek-harness@<full SHA>`, and the required co-author trailer. Keep follow-up local fixes separate when possible; conflict resolutions belong in the merge.
 
 ```bash
 git diff --cached --stat
 git diff --cached --check
+pnpm run verify:dobee-customizations --base "$dobee_base" --upstream "$upstream_commit" --cached
 git commit
 git merge-base --is-ancestor "$upstream_commit" HEAD
 ```
+
+<a id="customization-protection"></a>
+
+## Customization protection
+
+The [dobee customization guard](../../scripts/dobee-customizations.ts) discovers tracked paths with a `dobee`-prefixed component and text files referring to `dobee` or `Dobee` in the **pre-sync commit**, excluding vendored code and archived Agent Notes. `--upstream` also protects every local file changed since the common ancestor with the incoming upstream commit, including unmarked customizations such as CI switches. This covers independent plugins, build adapters, tests, documentation, shared manifests, profiles, and launcher wiring without maintaining a second file inventory. Removing references in the merge result cannot remove a file from the protected set.
+
+Run it on the staged merge before committing:
+
+```bash
+pnpm run verify:dobee-customizations --base "$dobee_base" --upstream "$upstream_commit" --cached
+```
+
+Changed protected files fail the check, including clean Git merges. Deleted protected files and unresolved conflicts always fail. Preserve the local implementation; for an upstream-compatible adaptation, inspect that file's complete diff against `dobee_base`, run its behavior tests, and acknowledge only its exact path with repeated `--reviewed <path>` arguments. An acknowledgement permits a reviewed content change, not a deletion, and unused paths or globs fail. Record the reviewed paths, rationale, and test results in the synchronization PR. The guard detects changes; it does not establish behavioral equivalence.
+
+For example, after reviewing an adapted root manifest:
+
+```bash
+pnpm run verify:dobee-customizations --base "$dobee_base" --upstream "$upstream_commit" --cached --reviewed package.json
+DOBEE_SYNC_REVIEWED='["package.json"]' git commit
+```
+
+Local `pre-commit` and `pre-merge-commit` hooks run the staged guard automatically when `MERGE_HEAD` is reachable from a fetched `refs/remotes/upstream/*` ref. They use `HEAD` as the pre-merge baseline and `MERGE_HEAD` as the upstream target, and accept exact reviewed paths through the JSON-array environment variable `DOBEE_SYNC_REVIEWED`. Install hooks through the normal dependency setup; do not skip them. Remote merges, bypassed hooks, and release tags outside the fetched upstream refs still require the explicit command above. PowerShell users set `$env:DOBEE_SYNC_REVIEWED` for the commit and remove it afterward.
+
+Keep build optimization code in `scripts/dobee-*` and product behavior in independent `dobee` plugins; do not transplant it into upstream plugins. Shared entrypoints must retain the Vite build scripts, Desktop runtime scope, watch launcher, plugin registrations, and profile/dependency declarations while incorporating compatible upstream changes. Do not add blanket `ours` merge attributes: they hide incoming fixes instead of reviewing adaptations. Follow the [local development guide](../development.md#application-commands) for build scope and cache recovery.
 
 <a id="conflicts-and-recovery"></a>
 
@@ -93,9 +121,10 @@ After landing, fetch `origin` and verify the pinned target is an ancestor of the
 ```bash
 git fetch origin
 git merge-base --is-ancestor "$upstream_commit" origin/main
+pnpm run verify:dobee-customizations --base "$dobee_base" --upstream "$upstream_commit"
 ```
 
-Success means exit status 0. Tree equality with upstream is required only for the initial unmodified snapshot connection, not for a customized dobee-work branch.
+Run the final guard in a clean checkout of the published main branch, repeating only the exact reviewed paths from the PR. Success means exit status 0 for both ancestry and customization checks. Tree equality with upstream is required only for the initial unmodified snapshot connection, not for a customized dobee-work branch.
 
 <a id="dev-note"></a>
 

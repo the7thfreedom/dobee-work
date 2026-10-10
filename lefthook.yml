@@ -4,6 +4,9 @@
 
 pre-commit:
   jobs:
+    - name: dobee upstream customization guard
+      run: node scripts/dobee-customizations.ts --merge --cached
+
     - name: translation pairing (staged records)
       glob: '*.i18n.yaml'
       exclude:
@@ -39,6 +42,9 @@ pre-commit:
 
 pre-merge-commit:
   jobs:
+    - name: dobee upstream customization guard
+      run: node scripts/dobee-customizations.ts --merge --cached
+
     - name: translation pairing (staged records)
       glob: '*.i18n.yaml'
       exclude:
