@@ -11,7 +11,7 @@
 ### 前置条件
 
 - Node.js 支持 22.19+ 与 24+。CI 覆盖 22.19、24 和 26；见 [Node 引擎下限 Agent Note](../.agents/notes/implemented/process/2026-07-06-node-engine-floor.zh.md)。
-- 启用 Node.js TypeScript 类型剥离。仓库构建脚本用 tsdown 的 native 配置加载器加载 `tsdown.config.ts`，因此当 `NODE_OPTIONS` 含 `--no-experimental-strip-types` 或 Node.js 构建缺少 TypeScript 支持时会失败；`pnpm run build` 会先检查这一条件并指出原因。
+- 启用 Node.js TypeScript 类型剥离。仓库构建脚本从 TypeScript 文件加载包声明，因此当 `NODE_OPTIONS` 含 `--no-experimental-strip-types` 或 Node.js 构建缺少 TypeScript 支持时会失败；`pnpm run build` 会先检查这一条件并指出原因。
 - 启用了 Corepack 的 pnpm。仓库在 `package.json` 中固定使用 `pnpm@11.7.0`；如果 `pnpm --version` 无法通过 Corepack 解析，请先运行 `corepack enable`。
 - Git 2.26 或更高版本；钩子设置会启用 Git 的 worktree 专属配置扩展。
 - 可选：一个 DeepSeek API key，用于 Web、headless 和 ACP（Agent Client Protocol）自动化 agent（智能体）演示以及真实 API 的 e2e 测试。
@@ -78,20 +78,38 @@ Host 与 Client 保持两个 aggregate program，是因为两侧在相同键下�
 
 拆分 Host/Client tsconfig 的包有六个：`api/remotes`、`api/gateway`、`api/session-controller`、`api/workspace-controller`、`client/connection` 与 `session-query/session-log-export`。`api/remotes` 的 Host 入口进入 Host Typert 图，而 Client 入口导入生成的 `/remote` 声明；`session-log-export` 则让 Node archive 生产代码不进入浏览器 controller。每个拆分包根 `tsconfig.json` 因此只作为 solution，两个 aggregate 和直接消费方分别引用 `tsconfig.host.json` 或 `tsconfig.client.json`。workspace `constraints` 门禁遍历可达的 Project Reference 图，并按各引用 project 自身的 compiler face 检查：只有单一配置的目标可由任一 face 引用，拆分配置的目标则必须引用匹配的 leaf，不得引用 solution 根或另一侧 leaf；该门禁按「两个 leaf 配置同时存在」自动发现拆分包，所以新拆分的包会自动纳入管辖。[`api-remotes` README](../packages/api/remotes/README.zh.md) 与 [`session-log-export` README](../packages/session-query/session-log-export/README.zh.md)分别说明其拆分。
 
-根构建按生成依赖排序：
+开发构建保持 Host 与 Client 的生成顺序：
 
 ```sh
-tsc -b tsconfig.host.json
-tsdown --env.DSH_BUILD_FACE host
-pnpm --filter @deepseek-ai/dsh-desktop run bundle
-tsc -b tsconfig.client.json
-tsdown --env.DSH_BUILD_FACE client
+tsc -b tsconfig.host.json --emitDeclarationOnly --noCheck
+tsx scripts/dobee-vite-build.ts --face host
+tsx scripts/dobee-vite-build.ts --face desktop
+tsc -b tsconfig.client.json --emitDeclarationOnly --noCheck
+tsx scripts/dobee-vite-build.ts --face client
 pnpm run build:web
 ```
 
-两次 tsdown 都匹配 `vendor/*`、`packages/*/*` 与 `apps/cli`，Host 阶段另外匹配 `apps/desktop-host`；两者都不扫描构建产物来发现 Client 包，也不维护 Host/Client 包过滤表。包内 tsdown 配置根据 `DSH_BUILD_FACE` 决定当前阶段的入口：普通 Client 插件在 Client 阶段同时生成 Node loader 与 browser bundle；`api-remotes` 通过 `hostPhase: true` 提前生成 Host 入口，再在 Client 阶段只生成 browser bundle。tsdown 只消费 `lib/types` 中由前置 tsc 发射的 JavaScript。tsdown 并发构建匹配到的 workspace 成员；`apps/desktop` 的主进程 bundle 需要从工作区 devDependencies 的 `lib/` 产物内联这些包，因此在 Host 阶段之后单独一步打 bundle（[Desktop README](../apps/desktop/README.zh.md#bundled-workspace-dependencies)）。
+dobee 独立维护的 [Vite 工作区构建器](../scripts/dobee-vite-build.ts)匹配 `vendor/*`、`packages/*/*` 与 `apps/cli`；Host 还构建 `apps/desktop-host` 和原生系统的 JavaScript 入口。它把上游 `tsdown.config.ts` 文件作为产物声明读取，不调用 tsdown 打包器，也不修改上游插件。`DSH_BUILD_FACE` 选择各包的 Node 与浏览器入口。Vite 直接消费源码，保留生产及 peer 依赖的外部引用、独立插件工厂、懒加载 chunk 名称、样式注入、Worker 和资源复制。Main 与 Preload 使用同一构建器；Renderer 壳与欢迎页也使用 Vite。
 
-Typert 只在 Host tsdown 中以 `tsconfig.host.json` 为种子运行。它分析 Host 类型并生成 Host 反射产物及 Host-for-Client Remote 投影；Client tsdown 不启动 Typert。`pnpm run typecheck` 因此先执行完整 Host lib 阶段，再运行 Client tsc；`pnpm run build` 继续执行 Client tsdown 和 Web 构建。
+`pnpm run build:desktop-runtime` 构建以应用、私有 Host、内置 CLI 和 Renderer 为根的 [Desktop 依赖闭包](../scripts/dobee-desktop-build-scope.ts)。选择包含工作区生产、peer 和可选依赖、运行时源码 import、profile bundle、bundle patch 条目及客户端模块请求；条件插件仍保留。Desktop 声明生成引用所选编译面的叶项目，不包含聚合程序中的测试与脚本。Host 声明生成一次性检查这些项目，然后 Typert 分析已经检查的类型；Client 声明生成使用 `--noCheck`。缺失工作区依赖或 bundle patch 会在生成前报错。插件仍独立输出，用户安装的外部插件不进入本次构建。`pnpm run build` 和发布打包保留完整工作区范围。
+
+[Desktop 协调器](../scripts/dobee-desktop-build.ts)只计算一次运行时选择，并通过 stdin 传给串行、隔离的 Host、Desktop 和 Client 构建器。每个子进程退出后才启动下一阶段，释放自身的编译程序与 Vite 图，同时保留反射生成先于 Client 的顺序。[Renderer 缓存](../scripts/dobee-renderer-build.ts)保留包自身的 Vite 版本与工作目录，校验实际模块、Worker 和字体输入，并在复用前比较所有产物内容及完整 `dist/` 文件清单。损坏、缺失或多余产物都会触发 Vite 的干净 Renderer 重建。
+
+构建输出报告声明生成时间、并发 Vite 阶段时间、包及构建数量、最慢的五个包构建和 Typert 时间。包耗时存在重叠，不能相加作为实际总耗时。冷构建测量删除编译产物、增量状态和 Renderer 产物，但保留已安装依赖；运行时准备、应用启动、安装包生成和依赖安装分别计量。
+
+Desktop 构建在包源码、实际打包输入、构建实现、依赖解析、继承环境及所有产物文件的内容哈希仍与记录一致时复用[经过校验的 Vite 包产物](../scripts/dobee-vite-cache.ts)。缺失或变化的产物会触发重建。含嵌套构建钩子或配置加载阶段文件读取的包不复用，因为无法取得完整输入及产物清单。缓存记录位于 `.dsh-build/dobee-vite/`，`pnpm run clean` 会删除它们；环境值只保存摘要。
+
+`pnpm run dev:desktop:watch` 使用 500 毫秒文件系统轮询在源码编辑后重建；`--watch-interval <毫秒>` 可设置正整数轮询间隔。客户端插件编辑使用现有 HMR，Web 壳与欢迎页 UI 编辑只刷新页面，不重启 Electron 或 Host。Main、Preload、Host 和元数据变化会重启受管进程并中断开发中的任务。构建串行执行，构建期间的新编辑保留在队列中，重建失败会停止应用，直到下一次编辑构建成功。退出会关闭监听并等待受管进程组结束；参见 [Desktop 开发命令](../apps/desktop/README.zh.md#develop)。
+
+Watch 启动时记录 [Host 依赖基线](../scripts/dobee-ui-build.ts)。UI 编辑请求 `build:desktop-runtime --ui`，只在环境、Host 可达源码、共享输入及 Node 产物与成功基线一致时跳过原生编译、Host 声明生成和 Typert。Host 对 UI 目录的纯类型导入仍作为 Host 输入。动态客户端插件编辑还会保留未变化的静态 Renderer 和欢迎页产物；静态 UI 编辑会重建这些页面并请求页面刷新。新增或删除 UI 文件、共享输入变化、产物缺失或缺少基线会拒绝捷径并执行完整 Desktop 构建；使用该回退时 watcher 会重启 Node 进程。`--record-ui-baseline` 可显式准备此基线，不改变普通 Desktop 构建路径。
+
+Watch 为输入清单完整覆盖编辑文件的动态客户端插件保留[常驻 Vite 编译器](../scripts/dobee-ui-resident.ts)。各编译器按需启动并保留自身模块图，数量受已构建插件集合限制。源码编辑成功后只重建受影响的浏览器工厂，不生成声明，也不再启动包管理器进程。编译前后均检查 Host 基线；Host 依赖变化或不支持的配置会回到普通构建。静态 UI 和配置加载时的文件读取钩子保留该路径。普通构建或开发退出写入相同产物前，会关闭隔离编译器进程及所有 watcher；`pnpm run typecheck` 仍是显式完整语义检查。
+
+UI 校验每次重新扫描仓库输入和已安装依赖声明，不重复展开重叠的文件 glob。每次校验只解析一次各 UI 包的清单，接受 Host 基线前对当前文件内容计算哈希，不依赖缓存的修改时间。哈希直接读取文件，不再重复探测存在性与文件类型；缺失文件会使摘要失效，其他读取失败会明确中止校验。常驻构建输出分别报告两个校验阶段和客户端记录哈希耗时。浏览器 HMR 可以在队列中的校验与记录工作结束前展示刚写入的插件产物，因此构建完成时间与可见更新时间分别测量。
+
+TypeScript 生成声明，不生成运行时 JavaScript。`pnpm run build` 和 `pnpm run build:official` 跳过聚合程序的语义检查；Typert 仍会先检查贡献反射的 Host 项目，再生成反射与 Remote 产物。`pnpm run typecheck` 检查两个完整编译面，包括测试与脚本。`pnpm run build:lib` 保留 Vite 打包前的完整语义检查。Host Typert 生成先于 Client 声明与打包，保证生成的 Remote import 可用。
+
+dobee 独立维护的 [Host Typert 缓存](../scripts/dobee-typert-cache.ts)只在仓库源码与配置、已安装依赖的声明与包元数据、生成器依赖及所有 Typert 产物的 SHA-256 哈希一致时复用生成结果。新增、删除或修改输入及产物都会触发生成。声明生成、装饰器转换、Vite 打包及显式请求的类型检查仍会执行。缓存位于 `.dsh-build/dobee-typert-cache.json`；`pnpm run clean` 会删除它，格式损坏的记录会中止构建并提示恢复方式。
 
 `pnpm run build` 会内联根包版本、七位源码 commit，并在 Git 报告本地变化时内联 dirty 标记；调用方提供的其他 `DSH_CLIENT_*` 值也会被继承。`pnpm run build:official` 是与 CI 和 release 产物构建等价的跨平台本地命令，并省略本地 dirty 标记。每次完整构建成功后都会写入一份被 gitignore 的记录，把精确公开值与 Vite 输出及动态 client bundle 绑定；release 打包和 built Web 测试会拒绝缺少记录或被后续局部构建改动的产物。`pnpm run dev:web` 会先执行这次完整构建（`--skip-build` 则复用现有产物树），再读取一次当前版本和 Git 状态，并在本次会话的所有 watcher stage 之间共享该环境；它不会校验完整构建记录，因为 watcher stage 会重写记录覆盖的产物。
 

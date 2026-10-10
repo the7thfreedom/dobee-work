@@ -459,7 +459,7 @@ export async function packageTarget(
   await execute(['run', 'release:pack', '--family', 'vendor', '--out', buildPaths.packedVendor, ...packArguments], buildEnv, REPOSITORY_ROOT)
   rmSync(buildPaths.packedLandlock, { recursive: true, force: true })
   mkdirSync(buildPaths.packedLandlock, { recursive: true })
-  await execute(['--dir', 'native/system', 'run', 'build:ts'], buildEnv, REPOSITORY_ROOT)
+  await execute(['run', 'build:native-lib'], buildEnv, REPOSITORY_ROOT)
   await execute([
     '--dir',
     'native/system/packages/entry',

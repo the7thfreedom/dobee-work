@@ -8,8 +8,8 @@
   "main": "lib/main.js",
   "scripts": {
     "test:installer": "node scripts/test-windows-installer.mjs",
-    "build": "tsc -b && pnpm run bundle",
-    "bundle": "tsdown --config-loader native",
+    "build": "tsc -b --emitDeclarationOnly && pnpm run bundle",
+    "bundle": "tsx ../../scripts/dobee-vite-build.ts --face desktop",
     "dev": "tsx scripts/dev.ts",
     "start": "tsx scripts/dev.ts --skip-build",
     "test:updates:local": "pnpm run build && node scripts/test-local-updater.mjs",
