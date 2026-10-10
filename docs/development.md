@@ -139,7 +139,7 @@ DEEPSEEK_BASE_URL=https://... # optional
 lefthook is configured in `lefthook.yml` as a fast local checkpoint:
 
 - `pre-commit` verifies staged pairing records against the staged owner blobs, validates staged files with the project-free `.oxlintrc.staged.json` profile and applies Oxlint fixes with one bounded retry, regenerates `THIRD_PARTY_NOTICES.md` when a staged file is one of its inputs, checks the staged diff for whitespace errors, and runs the vendor manifest guard.
-- `pre-merge-commit` performs the same index-backed pairing check before Git creates an automatic merge commit.
+- `pre-merge-commit` runs only the [dobee upstream customization guard](cookbook/syncing-dobee-upstream.md#customization-protection). Upstream translation-pairing and archived-note checks do not intercept automatic merge commits; manual `git commit` still runs the normal `pre-commit` checks.
 - `pre-push` runs `pnpm run typecheck`, which completes the Host lib phase, including generated Typert contracts, before the Client TypeScript check.
 
 The vendor manifest guard checks that changes under `vendor/*/src` are staged with the matching `vendor/README.md` manifest update. See `vendor/README.md` before editing vendored code.
@@ -178,18 +178,25 @@ The PTC mode demo runs the same headless profile with code presentation enabled:
 pnpm run demo:ptc -- "summarize this workspace"
 ```
 
+<a id="application-commands"></a>
+
 ### Application commands
 
-Web and Desktop share one command pair. `start:*` launches the artifacts of a prior `pnpm run build`; `dev:*` runs that build first and then launches. Web additionally keeps client bundles rebuilt on source edits, because its Host runs from source while the browser loads built bundles:
+Choose the build scope before launching: `pnpm run build` prepares the complete workspace for Web and release consumers; `pnpm run build:desktop-runtime` prepares only the Desktop runtime dependency closure. `start:*` reuses existing artifacts. `dev:web` builds the complete workspace and watches client bundles; `dev:desktop` builds the Desktop runtime once, while `dev:desktop:watch` also rebuilds on edits:
 
 ```sh
 pnpm run start:web       # serve built Web artifacts through the source launcher (the same launch as pnpm dsh web)
 pnpm run dev:web         # build, serve, and rebuild Web client bundles on source edits
 pnpm run start:desktop   # launch built Desktop artifacts
-pnpm run dev:desktop     # build, then launch Desktop
+pnpm run dev:desktop     # build Desktop runtime, then launch
+pnpm run dev:desktop:watch # build, launch, and watch Desktop sources
 ```
 
-Arguments after a Web command reach `dsh web`, for example `pnpm run dev:web --no-open --port 3081`; `dev:web` also accepts `--skip-build` to reuse the existing artifact tree and `--no-serve` to run only the rebuild watchers beside a server started elsewhere. Both Web commands use the normal Harness home, while the Desktop commands use the isolated development home described in the [Desktop README](../apps/desktop/README.md). The root `Makefile` names the same commands as `make web`, `make dev-web`, `make desktop`, `make dev-desktop`, and `make build`; `ARGS='--no-open'` forwards options.
+Desktop UI contributors normally use `pnpm run dev:desktop:watch`; Host/Main/Preload changes restart the application and interrupt tasks. Use `pnpm run typecheck` for the complete semantic check; a successful runtime build does not replace it. To recover from suspect cached artifacts, stop the watcher, run `pnpm run clean`, and rebuild the selected scope. See [build ordering and cache validation](#typescript-project-layout).
+
+Arguments after a Web command reach `dsh web`, for example `pnpm run dev:web --no-open --port 3081`; `dev:web` also accepts `--skip-build` to reuse the existing artifact tree and `--no-serve` to run only the rebuild watchers beside a server started elsewhere. Both Web commands use the normal Harness home, while the Desktop commands use the isolated development home described in the [Desktop README](../apps/desktop/README.md). The root `Makefile` exposes the same commands, including `make build-desktop` and `make dev-desktop-watch`; `ARGS` forwards options, such as `make dev-desktop-watch ARGS='--watch-interval 1000'`.
+
+dobee-work keeps build adapters in `scripts/dobee-*` and product customizations in independent `dobee` plugins. Upstream synchronization must preserve both the owned files and their shared entrypoint wiring; follow the [synchronization guard procedure](cookbook/syncing-dobee-upstream.md#customization-protection) rather than replacing local files with upstream versions.
 
 ### TODO markers
 

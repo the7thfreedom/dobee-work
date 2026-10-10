@@ -143,7 +143,7 @@ DEEPSEEK_BASE_URL=https://... # optional
 lefthook 在 `lefthook.yml` 中配置，作为快速的本地检查点：
 
 - `pre-commit` 对照暂存的配对文档 blob 校验暂存的配对记录，使用不加载项目的 `.oxlintrc.staged.json` 配置验证暂存文件，并通过一次有界重试应用 Oxlint 修复，在暂存文件属于 `THIRD_PARTY_NOTICES.md` 的输入时重新生成该文件，然后检查暂存 diff 中的空白错误，并运行 vendor manifest（元数据清单）守卫；
-- `pre-merge-commit` 在 Git 创建自动合并提交前执行同样以索引为准的配对检查；
+- `pre-merge-commit` 仅运行 [dobee 上游定制保护检查](cookbook/syncing-dobee-upstream.zh.md#customization-protection)。上游的翻译配对和归档备注检查不拦截自动合并提交；手动 `git commit` 仍执行正常的 `pre-commit` 检查；
 - `pre-push` 运行 `pnpm run typecheck`；该命令会先完成包含 Typert 约定生成的完整 Host lib 阶段，再运行 Client TypeScript 检查。
 
 vendor manifest 守卫检查 `vendor/*/src` 下的改动是否连同对应的 `vendor/README.md` manifest 更新一起暂存。请在编辑 vendor 代码前先阅读 `vendor/README.md`。
@@ -182,18 +182,25 @@ PTC mode 演示启用代码式工具展示，并运行同一个 headless profile
 pnpm run demo:ptc -- "summarize this workspace"
 ```
 
+<a id="application-commands"></a>
+
 ### 应用命令
 
-Web 与 Desktop 共用同一对命令。`start:*` 启动上一次 `pnpm run build` 的产物；`dev:*` 先执行该构建再启动。Web 还会在源码修改时持续重建 client bundle，因为它的 Host 从源码运行，而浏览器加载的是构建产物：
+启动前先选择构建范围：`pnpm run build` 为 Web 和发布消费者准备完整工作区；`pnpm run build:desktop-runtime` 只准备 Desktop 运行时依赖闭包。`start:*` 复用已有产物。`dev:web` 构建完整工作区并监听 client bundle；`dev:desktop` 只构建一次 Desktop 运行时，而 `dev:desktop:watch` 还会在编辑后重建：
 
 ```sh
 pnpm run start:web       # serve built Web artifacts through the source launcher (the same launch as pnpm dsh web)
 pnpm run dev:web         # build, serve, and rebuild Web client bundles on source edits
 pnpm run start:desktop   # launch built Desktop artifacts
-pnpm run dev:desktop     # build, then launch Desktop
+pnpm run dev:desktop     # build Desktop runtime, then launch
+pnpm run dev:desktop:watch # build, launch, and watch Desktop sources
 ```
 
-Web 命令后面的参数会传给 `dsh web`，例如 `pnpm run dev:web --no-open --port 3081`；`dev:web` 还接受 `--skip-build` 复用现有产物树，以及 `--no-serve` 只运行重建 watcher、配合别处启动的服务器。两个 Web 命令使用正常的 Harness home，而 Desktop 命令使用 [Desktop README](../apps/desktop/README.zh.md) 描述的隔离开发 home。根目录 `Makefile` 以 `make web`、`make dev-web`、`make desktop`、`make dev-desktop` 和 `make build` 命名同一套命令；`ARGS='--no-open'` 用于转发参数。
+Desktop UI 开发通常使用 `pnpm run dev:desktop:watch`；Host/Main/Preload 变更会重启应用并中断任务。使用 `pnpm run typecheck` 执行完整语义检查，运行时构建成功不能替代它。若怀疑缓存产物异常，先停止 watcher，运行 `pnpm run clean`，再重建所选范围。参见[构建顺序与缓存校验](#typescript-project-layout)。
+
+Web 命令后面的参数会传给 `dsh web`，例如 `pnpm run dev:web --no-open --port 3081`；`dev:web` 还接受 `--skip-build` 复用现有产物树，以及 `--no-serve` 只运行重建 watcher、配合别处启动的服务器。两个 Web 命令使用正常的 Harness home，而 Desktop 命令使用 [Desktop README](../apps/desktop/README.zh.md) 描述的隔离开发 home。根目录 `Makefile` 提供同一套命令，包括 `make build-desktop` 和 `make dev-desktop-watch`；`ARGS` 转发参数，例如 `make dev-desktop-watch ARGS='--watch-interval 1000'`。
+
+dobee-work 将构建适配器放在 `scripts/dobee-*`，将产品定制放在独立的 `dobee` 插件中。上游同步必须同时保留自有文件及其共享入口接入；遵循[同步保护流程](cookbook/syncing-dobee-upstream.zh.md#customization-protection)，不要用上游版本覆盖本地文件。
 
 ### TODO 标记
 
