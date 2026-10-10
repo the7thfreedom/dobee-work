@@ -11,6 +11,11 @@ import { developmentRuntimeDirectory, resolveDesktopBuildTarget } from './deskto
 import { prepareDevelopmentProject } from './development-project.ts'
 import { prepareDevelopmentApp } from './development-app.ts'
 import { preparePrimaryRuntime } from './prepare-primary-runtime.ts'
+import { DobeeDevelopmentProcess } from '../../../scripts/dobee-development-process.ts'
+import { DobeeDesktopRebuildQueue, dobeeDesktopRestartRequired, dobeeWatchDesktopSources } from '../../../scripts/dobee-desktop-watch.ts'
+import { dobeeReloadDesktopRenderer } from '../../../scripts/dobee-renderer-reload.ts'
+import { dobeeBuildUpdate } from '../../../scripts/dobee-ui-build.ts'
+import { DobeeResidentUiProcess } from '../../../scripts/dobee-ui-resident-process.ts'
 
 const APP_ROOT = resolve(import.meta.dirname, '..')
 const REPOSITORY_ROOT = resolve(APP_ROOT, '..', '..')
@@ -48,15 +53,21 @@ async function run(command: string, args: readonly string[], cwd: string, enviro
   })
 }
 
-async function runPackageScript(script: string, cwd: string): Promise<void> {
+async function runPackageScript(script: string, cwd: string, args: readonly string[] = []): Promise<void> {
   const packageManager = process.env.npm_execpath
   if (packageManager === undefined || packageManager === '') {
     throw new Error('desktop development: invoke this launcher through pnpm run dev:desktop or start:desktop')
   }
-  await run(process.execPath, [packageManager, 'run', script], cwd)
+  await run(process.execPath, [packageManager, 'run', script, ...args], cwd)
 }
 
-async function launchElectron(): Promise<void> {
+interface ElectronInvocation {
+  readonly command: string
+  readonly args: readonly string[]
+  readonly environment: NodeJS.ProcessEnv
+}
+
+function electronInvocation(): ElectronInvocation {
   const require = createRequire(import.meta.url)
   const electron: unknown = require('electron')
   if (typeof electron !== 'string') throw new Error('desktop development: electron executable is unavailable')
@@ -79,22 +90,129 @@ async function launchElectron(): Promise<void> {
   if (process.platform === 'darwin') {
     const executable = prepareDevelopmentApp({ electron, appRoot: APP_ROOT, directory: DEVELOPMENT_ROOT, home, userData,
       mainPort, rendererPort, hostPort, openDevtools: environment.DSH_DESKTOP_OPEN_DEVTOOLS! })
-    await run(executable, [], APP_ROOT, environment)
-    return
+    return { command: executable, args: [], environment }
   }
-  await run(electron, [
+  return { command: electron, args: [
     `--inspect=127.0.0.1:${String(mainPort)}`,
     `--remote-debugging-port=${String(rendererPort)}`,
     `--user-data-dir=${userData}`,
     APP_ROOT,
-  ], APP_ROOT, environment)
+  ], environment }
+}
+
+async function watchDesktop(interval: number): Promise<void> {
+  const shutdown = Promise.withResolvers<{ readonly error?: unknown }>()
+  const fail = (error: unknown): void => { shutdown.resolve({ error }) }
+  let application: DobeeDevelopmentProcess | undefined
+  let restarting = false
+  let closing = false
+  let resident: DobeeResidentUiProcess | undefined
+  const start = async (): Promise<void> => {
+    const invocation = electronInvocation()
+    application = new DobeeDevelopmentProcess(invocation.command, invocation.args, {
+      cwd: APP_ROOT, env: invocation.environment, stdio: 'inherit',
+    })
+    const current = application
+    void current.exited.then((result) => {
+      if (restarting || closing) return
+      if (result.code === 0) shutdown.resolve({})
+      else fail(new Error(`desktop development: Electron exited ${String(result.code ?? result.signal)}`))
+    }, fail)
+    await new Promise<void>((resolve, reject) => {
+      current.child.once('spawn', resolve)
+      current.child.once('error', reject)
+    })
+  }
+  const stop = async (): Promise<void> => { await application?.stop(); application = undefined }
+  const queue = new DobeeDesktopRebuildQueue({
+    async build(paths, signal) {
+      if (!dobeeDesktopRestartRequired(paths)) {
+        resident ??= new DobeeResidentUiProcess(REPOSITORY_ROOT, process.env, interval)
+        if (await resident.build(paths, signal)) return 'hmr'
+      }
+      await resident?.close()
+      resident = undefined
+      const packageManager = process.env.npm_execpath
+      if (packageManager === undefined) throw new Error('desktop development: watch requires pnpm run')
+      const build = new DobeeDevelopmentProcess(process.execPath, [
+        packageManager, 'run', 'build:desktop-runtime', '--record-ui-baseline',
+        ...(!dobeeDesktopRestartRequired(paths) ? ['--ui'] : []),
+      ], {
+        cwd: REPOSITORY_ROOT, env: process.env, stdio: 'inherit',
+      })
+      const cancel = (): void => { void build.stop().catch(fail) }
+      signal.addEventListener('abort', cancel, { once: true })
+      try {
+        const result = await build.exited
+        if (result.code !== 0 && !signal.aborted) throw new Error(`desktop development: rebuild exited ${String(result.code ?? result.signal)}`)
+      } finally {
+        signal.removeEventListener('abort', cancel)
+        if (signal.aborted) await build.stop()
+      }
+      return signal.aborted ? 'hmr' : dobeeBuildUpdate(REPOSITORY_ROOT)
+    },
+    async restart(signal) {
+      restarting = true
+      try {
+        await stop()
+        if (!signal.aborted) await start()
+      } finally { restarting = false }
+    },
+    async reload(signal) {
+      const pid = application?.child.pid
+      if (pid === undefined) throw new Error('desktop development: no owned Electron process to reload')
+      await dobeeReloadDesktopRenderer(debugPort('DSH_DESKTOP_RENDERER_DEBUG_PORT', 9222), pid, signal)
+    },
+    async failed(error) {
+      console.error('desktop development: rebuild failed; stopping the application until the next successful edit', error)
+      restarting = true
+      try {
+        try { await resident?.close(); resident = undefined } finally { await stop() }
+      } finally { restarting = false }
+    },
+  })
+  let changed = new Set<string>()
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const closeWatcher = await dobeeWatchDesktopSources(REPOSITORY_ROOT, (path) => {
+    changed.add(path)
+    clearTimeout(timer)
+    timer = setTimeout(() => {
+      const paths = [...changed]
+      changed = new Set()
+      void queue.enqueue(paths).catch(fail)
+    }, 200)
+  }, fail, interval)
+  const terminate = (): void => { shutdown.resolve({}) }
+  process.on('SIGINT', terminate)
+  process.on('SIGTERM', terminate)
+  try {
+    await start()
+    console.log('desktop development: watching sources; Host/Main/Preload edits restart the application and interrupt tasks')
+    const result = await shutdown.promise
+    if ('error' in result) throw result.error
+  } finally {
+    closing = true
+    clearTimeout(timer)
+    process.off('SIGINT', terminate)
+    process.off('SIGTERM', terminate)
+    try { await closeWatcher() } finally {
+      try { await queue.close() } finally {
+        try { await resident?.close() } finally { await stop() }
+      }
+    }
+  }
 }
 
 async function main(): Promise<void> {
-  const { values } = parseArgs({ options: { 'skip-build': { type: 'boolean', default: false } } })
+  const { values } = parseArgs({ options: {
+    'skip-build': { type: 'boolean', default: false },
+    watch: { type: 'boolean', default: false },
+    'watch-interval': { type: 'string', default: '500' },
+  } })
+  const interval = Number(values['watch-interval'])
+  if (!Number.isSafeInteger(interval) || interval < 1) throw new Error('desktop development: --watch-interval must be a positive integer')
   if (!values['skip-build']) {
-    await runPackageScript('build', REPOSITORY_ROOT)
-    await runPackageScript('build', APP_ROOT)
+    await runPackageScript('build:desktop-runtime', REPOSITORY_ROOT, values.watch ? ['--record-ui-baseline'] : [])
   }
   for (const path of [
     join(APP_ROOT, 'lib', 'main.js'),
@@ -121,7 +239,11 @@ async function main(): Promise<void> {
     target: resolveDesktopBuildTarget(),
   })
   await preparePrimaryRuntime()
-  await launchElectron()
+  if (values.watch) await watchDesktop(interval)
+  else {
+    const invocation = electronInvocation()
+    await run(invocation.command, invocation.args, APP_ROOT, invocation.environment)
+  }
 }
 
 await main().catch((error: unknown) => {
