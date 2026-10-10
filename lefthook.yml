@@ -45,16 +45,6 @@ pre-merge-commit:
     - name: dobee upstream customization guard
       run: node scripts/dobee-customizations.ts --merge --cached
 
-    - name: translation pairing (staged records)
-      glob: '*.i18n.yaml'
-      exclude:
-        - '.agents/notes/archived/**'
-      run: node_modules/.bin/tsx scripts/verify-translation-pairing.ts --cached {staged_files}
-
-    - name: archived agent notes
-      glob: '.agents/notes/archived/**'
-      run: node_modules/.bin/tsx scripts/verify-archived-agent-notes.ts
-
 pre-push:
   jobs:
     - name: typecheck

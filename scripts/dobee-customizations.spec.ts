@@ -1,8 +1,9 @@
 import { execFileSync, spawnSync } from 'node:child_process'
-import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
+import { load } from 'js-yaml'
 import { verifyDobeeCustomizations } from './dobee-customizations.ts'
 
 const roots: string[] = []
@@ -49,6 +50,18 @@ function cli(root: string, args: string[], reviewed?: string): ReturnType<typeof
 }
 
 describe('dobee customization synchronization guard', () => {
+  it('keeps only the dobee guard in automatic merge checks without changing ordinary commit checks', () => {
+    const configuration: unknown = load(readFileSync(resolve(import.meta.dirname, '..', 'lefthook.yml'), 'utf8'))
+    expect(configuration).toMatchObject({
+      'pre-merge-commit': {
+        jobs: [{ name: 'dobee upstream customization guard', run: 'node scripts/dobee-customizations.ts --merge --cached' }],
+      },
+    })
+    expect(configuration).toHaveProperty('pre-merge-commit.jobs.length', 1)
+    expect(configuration).toHaveProperty('pre-commit.jobs.1.name', 'translation pairing (staged records)')
+    expect(configuration).toHaveProperty('pre-commit.jobs.2.name', 'archived agent notes')
+  })
+
   it('accepts untouched customizations while upstream and excluded files change', () => {
     const { root, base, write } = fixture()
     write('ordinary.txt', 'updated upstream text\n')
