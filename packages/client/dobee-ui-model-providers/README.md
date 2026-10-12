@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-Use **dobee model providers** in Settings to configure API providers or connect a GitHub Copilot subscription. Search the provider sidebar, configure Endpoint and API Key or sign in, sync models, and choose a default from the available list. API keys and subscription tokens remain separate from provider settings. Failed writes retain your draft.
+Use **Models** in Settings to configure API providers or connect a GitHub Copilot subscription. Search the provider sidebar, configure Endpoint and API Key or sign in, sync models, and choose a default from the available list. API keys and subscription tokens remain separate from provider settings. Failed writes retain your draft.
 
 ## Table of Contents
 

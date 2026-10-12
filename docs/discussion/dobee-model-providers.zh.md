@@ -41,7 +41,7 @@ GitHub Copilot 不同于已退役的 GitHub Models API。Copilot 使用设备授
 <a id="default-composition"></a>
 ## 默认组合
 
-dobee 自有 bundle 插入服务商及 UI 插件，通过组合覆盖修改默认模型配置，不修改上游插件代码。现有官方路由继续用于历史会话。初始默认值不发起网络请求，不静默选择其他付费服务商。Desktop 验证使用隔离的 Harness home 和 Electron 用户数据目录。
+dobee 自有 bundle 禁用上游模型服务商及其设置 UI，插入 dobee 服务商及 UI 插件，通过组合覆盖修改默认模型配置，不修改上游插件代码。使用上游路由的已有会话必须先选择已配置的 dobee 模型才能继续。初始默认值不发起网络请求，不静默选择其他付费服务商。Desktop 验证使用隔离的 Harness home 和 Electron 用户数据目录。
 
 <a id="acceptance"></a>
 ## 验收

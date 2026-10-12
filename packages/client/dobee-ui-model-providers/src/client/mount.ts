@@ -90,7 +90,7 @@ function registerUi(ctx: Context): void {
   ctx.effect(() => ctx.remote.$on('credentials/reference-updated', () => { void controller.refreshCredential() }))
   ctx.effect(() => ctx.configForms.whileServed([NAMESPACE], () => ctx.slots.inject('settings.section', () =>
     ctx.slots.register({
-      name: 'settings.section', id: NAMESPACE, order: 11, label: () => t('title'), locale, inject: face,
+      name: 'settings.section', id: 'models', order: 10, label: () => t('title'), locale, inject: face,
     }, Section))))
   ctx.effect(() => ctx.slots.inject('shell.overlay', () => ctx.slots.register({
     name: 'shell.overlay', id: 'dobee-model-providers.outcome', locale, inject: face,

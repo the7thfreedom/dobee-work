@@ -1,6 +1,6 @@
 /** Locale-owned copy for connection settings and operation outcomes. */
 export const en = {
-  title: 'dobee model providers',
+  title: 'Models',
   providers: 'Providers',
   providerKind: 'Provider type',
   all: 'All',
@@ -129,7 +129,7 @@ export type LocaleKey = keyof typeof en
 
 /** Chinese connection-settings dictionary aligned with English keys. */
 export const zh: Record<LocaleKey, string> = {
-  title: 'dobee 模型提供商',
+  title: '模型',
   providers: '提供商', providerKind: '提供商类型', all: '全部', api: 'API', subscription: '订阅',
   addCustom: '添加自定义提供商', selectProvider: '请从左侧选择提供商', noProviders: '没有匹配的提供商',
   enabled: '启用提供商', disabled: '未启用',

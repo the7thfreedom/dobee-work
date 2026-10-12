@@ -23,7 +23,7 @@ kind: "package-bundle"
 <a id="use-this-package"></a>
 ## 使用此包
 
-Dobee Desktop 在上游 Web bundle 之后加载此 bundle。在 dobee 设置页配置 DeepSeek 连接，或选择其他已配置默认模型。初始连接引用 `DOBEE_DEEPSEEK_API_KEY`。上游原生欢迎页表单配置官方服务商，不配置 dobee；使用其现有的稍后配置操作进入 dobee 设置页。现有官方模型路由继续挂载以支持历史会话。
+Dobee Desktop 在上游 Web bundle 之后加载此 bundle。在**设置 → 模型**中配置 DeepSeek 连接，或选择其他已配置默认模型。初始连接引用 `DOBEE_DEEPSEEK_API_KEY`。上游原生欢迎页表单配置已禁用的官方服务商，不配置 dobee；使用其现有的稍后配置操作进入 dobee 设置页。使用上游路由的已有会话必须先选择已配置的 dobee 模型才能继续。
 
 <a id="understand-the-implementation"></a>
 ## 理解实现
@@ -31,7 +31,7 @@ Dobee Desktop 在上游 Web bundle 之后加载此 bundle。在 dobee 设置页�
 <details>
 <summary>实现细节</summary>
 
-[配置补丁](cordis.patch.yml) 插入 dobee 服务商运行时、Remote 控制器和 UI 插件，再覆盖默认模型配置。不修改上游插件实现。
+[配置补丁](cordis.patch.yml) 禁用上游 `ui-settings-models`、`llm-deepseek`、`llm-deepseek-account` 和 `llm-pi-ai` 插件，插入 dobee 服务商运行时、Remote 控制器和 UI 插件，再覆盖默认模型配置。设置中仅通过 dobee UI 显示一个**模型**页面。聊天模型选择器保持启用，仅列出 dobee 路由。不修改上游插件实现。
 
 </details>
 
