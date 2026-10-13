@@ -23,7 +23,7 @@ Use dobee model connections and their settings page in Desktop. This bundle adds
 <a id="use-this-package"></a>
 ## Use this package
 
-Dobee Desktop includes this bundle after the upstream Web bundles. Configure the DeepSeek connection in the dobee settings page or select another configured default. The initial connection references `DOBEE_DEEPSEEK_API_KEY`. The upstream native welcome form configures the official provider, not dobee; use its existing configure-later action to reach the dobee settings page. Existing official model routes remain mounted for historical sessions.
+Dobee Desktop includes this bundle after the upstream Web bundles. Configure the DeepSeek connection in **Settings → Models** or select another configured default. The initial connection references `DOBEE_DEEPSEEK_API_KEY`. The upstream native welcome form configures the disabled official provider, not dobee; use its existing configure-later action to reach the dobee settings page. Existing sessions using upstream routes must select a configured dobee model before continuing.
 
 <a id="understand-the-implementation"></a>
 ## Understand the implementation
@@ -31,7 +31,7 @@ Dobee Desktop includes this bundle after the upstream Web bundles. Configure the
 <details>
 <summary>Implementation internals</summary>
 
-The [patch](cordis.patch.yml) inserts the dobee provider runtime, Remote controller, and UI plugins, then overrides the default-model row. No upstream plugin implementation is changed.
+The [patch](cordis.patch.yml) disables the upstream `ui-settings-models`, `llm-deepseek`, `llm-deepseek-account`, and `llm-pi-ai` plugins and inserts the dobee provider runtime, Remote controller, and UI plugins, then overrides the default-model row. Settings exposes one **Models** section through the dobee UI. The chat model selector remains enabled and lists only dobee routes. No upstream plugin implementation is changed.
 
 </details>
 
