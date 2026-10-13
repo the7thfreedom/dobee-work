@@ -98,7 +98,7 @@ DOBEE_SYNC_REVIEWED='["package.json"]' git commit
 
 当 `MERGE_HEAD` 可从已获取的 `refs/remotes/upstream/*` 引用到达时，本地 `pre-commit` 和 `pre-merge-commit` hook 自动检查暂存结果。它们以合并前的 `HEAD` 为基线、`MERGE_HEAD` 为上游目标，并通过 JSON 数组环境变量 `DOBEE_SYNC_REVIEWED` 接收准确的已审阅路径。通过正常依赖安装流程安装 hook，不得跳过。远端合并、绕过 hook 的合并，以及不在已获取上游引用中的发布 tag，仍须执行上述显式命令。PowerShell 用户需为该提交设置 `$env:DOBEE_SYNC_REVIEWED`，随后移除。
 
-构建优化代码保留在 `scripts/dobee-*`，产品行为保留在独立的 `dobee` 插件中，不得移植进上游插件。共享入口在吸收兼容上游变更时，必须保留 Vite 构建脚本、Desktop 运行时范围、watch 启动器、插件注册及 profile/依赖声明。不要添加全局 `ours` 合并属性，它会隐藏传入修复而非审阅适配。构建范围和缓存恢复请遵循[本地开发指南](../development.zh.md#application-commands)。
+构建优化代码保留在 `scripts/dobee-*`，产品行为保留在独立的 `dobee` 插件中，不得复制上游插件或将产品专属行为移植进上游插件。经审阅的机械品牌修改可以改变上游文案、素材、打包元数据及文档，但不得改变行为；缺少扩展点时，允许最小的、经审阅的通用改造。同步时保留这些修改，并运行 `pnpm run verify:dobee-branding` 拒绝恢复旧产品名称。品牌文字仅表示文件受保护，不代表功能定制；应审阅具体 diff，而非将每个受保护文件视为插件分叉。共享入口在吸收兼容上游变更时，必须保留 Vite 构建脚本、Desktop 运行时范围、watch 启动器、插件注册及 profile/依赖声明。不要添加全局 `ours` 合并属性，它会隐藏传入修复而非审阅适配。构建范围和缓存恢复请遵循[本地开发指南](../development.zh.md#application-commands)。
 
 <a id="conflicts-and-recovery"></a>
 

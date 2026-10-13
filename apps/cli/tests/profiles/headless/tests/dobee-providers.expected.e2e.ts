@@ -70,6 +70,8 @@ it('records a dobee model turn without another Harness adapter executing it', as
         const decoded = await Promise.all(scanned.frames.map(async frame =>
           (await decompressZstdFrame(compressed.subarray(frame.start, frame.end))).toString()))
         const log = decoded.join('')
+        expect(log).toContain('You are an AI agent powered by DobeeWork.')
+        expect(log).not.toContain(['powered by DeepSeek', 'Harness'].join(' '))
         const header: unknown = JSON.parse(log.split('\n')[0] ?? '')
         if (!record(header) || typeof header.id !== 'string') {
           throw new Error('Invalid recorded Session header')

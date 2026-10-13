@@ -1,0 +1,37 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/client/dobee-brand/README.md
+/:
+  en: fb5d1ebd4de78599
+  zh: 4b929ff726efa090
+/deepseek-ai-dsh-client-dobee-brand:
+  en: 55657911a2de92bd
+  zh: 31db4f0e5808a366
+/deepseek-ai-dsh-client-dobee-brand/summary:
+  en: a070e806aab2bccd
+  zh: f7e2207c61cdbd51
+/deepseek-ai-dsh-client-dobee-brand/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 0ddfaed0f41243e6
+/deepseek-ai-dsh-client-dobee-brand/use-this-package:
+  en: 23865f591450f988
+  zh: ccdb4a2cea2446b5
+/deepseek-ai-dsh-client-dobee-brand/understand-the-implementation:
+  en: a512132e19ee34b8
+  zh: 480b66495a85d277
+/deepseek-ai-dsh-client-dobee-brand/further-exploration:
+  en: b85fbfc110b094ac
+  zh: b4c9b6b8c1354b20
+/deepseek-ai-dsh-client-dobee-brand/model-experience:
+  en: cd88c54b1f365a67
+  zh: 76e5deb061bfc00d
+/deepseek-ai-dsh-client-dobee-brand/model-experience/kv-cache-effect:
+  en: 4f912e6f343086de
+  zh: 15f760314cb5b36c
+/deepseek-ai-dsh-client-dobee-brand/known-limitations-and-deferred-work:
+  en: e4e42b7b5c2faf03
+  zh: 7fd1b65862032d0e
+/deepseek-ai-dsh-client-dobee-brand/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 8ec3e73528ddb1a6

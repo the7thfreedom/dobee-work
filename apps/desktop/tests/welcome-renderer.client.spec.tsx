@@ -55,7 +55,7 @@ describe('dobee desktop welcome plugin', () => {
     expect(document.title).toBe('DobeeWork')
     expect(screen.getByRole('img').textContent).toBe('DobeeWork')
     expect(document.querySelector('#welcome-heading')!.textContent).toContain('DobeeWork')
-    expect(document.body.textContent).not.toContain('DeepSeek Harness')
+    expect(document.body.textContent).not.toContain(['DeepSeek', 'Harness'].join(' '))
     await expect(view.copy()).toMatchFileSnapshot(`./expected/welcome/dobee-${language}.expected.txt`)
     fireEvent.click(view.button('#api-key'))
     await expect(view.copy()).toMatchFileSnapshot(`./expected/welcome/dobee-${language}-api-key.expected.txt`)

@@ -1,6 +1,6 @@
 {
   "name": "@deepseek-ai/dsh-agent-loop",
-  "description": "The concrete agent loop plugin for the DeepSeek Harness",
+  "description": "The concrete agent loop plugin for the DobeeWork",
   "version": "0.2.1-alpha.1",
   "publishConfig": {
     "access": "public"

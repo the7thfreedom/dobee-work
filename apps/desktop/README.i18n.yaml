@@ -2,78 +2,78 @@
 # section, a hash of its English and Chinese blocks outside code blocks and generated regions.
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write apps/desktop/README.md
-/deepseek-harness-desktop:
-  en: 8cc71d1dfba5077a
-  zh: 3db93c9d0d240f61
-/deepseek-harness-desktop/terminal-command:
+/dobeework-desktop:
+  en: f3f016ac3949bb62
+  zh: ff5deaa2a284dad9
+/dobeework-desktop/terminal-command:
   en: bef92953c237363f
   zh: d21d6effd21b8c00
-/deepseek-harness-desktop/closing-the-window-and-quitting:
-  en: c323e02e3f0305fe
-  zh: 3c730db632136443
-/deepseek-harness-desktop/key-technical-decisions:
+/dobeework-desktop/closing-the-window-and-quitting:
+  en: 2557f15cbe7f7e71
+  zh: 25c86a435172c2fb
+/dobeework-desktop/key-technical-decisions:
   en: 069fdfd72d2ea26a
   zh: 76ae549d43c99bb4
-/deepseek-harness-desktop/key-technical-decisions/bundled-workspace-dependencies:
+/dobeework-desktop/key-technical-decisions/bundled-workspace-dependencies:
   en: affbfffe6b64153c
   zh: 5f859cbf970c091f
-/deepseek-harness-desktop/bundled-command-runtime:
+/dobeework-desktop/bundled-command-runtime:
   en: 09f0b75af9f0ed14
   zh: 60bbc2e67d5e87a8
-/deepseek-harness-desktop/installation-ownership:
+/dobeework-desktop/installation-ownership:
   en: 22153a298a6662e1
   zh: 3600803c8c9d0274
-/deepseek-harness-desktop/installation-ownership/runtime-and-plugin-activation:
-  en: a1a47b09f4a72ba4
-  zh: 7b1cf27f0b72cf31
-/deepseek-harness-desktop/installation-ownership/host-environment:
+/dobeework-desktop/installation-ownership/runtime-and-plugin-activation:
+  en: dae0bd91e125af09
+  zh: 7e7640850968ee74
+/dobeework-desktop/installation-ownership/host-environment:
   en: 98cf848762482d48
   zh: 74f9100a39ec8c2f
-/deepseek-harness-desktop/develop:
+/dobeework-desktop/develop:
   en: 31a65519f5c65f82
   zh: 30623295f18b3f74
-/deepseek-harness-desktop/develop/startup-onboarding:
+/dobeework-desktop/develop/startup-onboarding:
   en: a51346b8d880ddba
   zh: 7913214c1c66063c
-/deepseek-harness-desktop/develop/welcome-window-appearance:
+/dobeework-desktop/develop/welcome-window-appearance:
   en: ae319a496639b38d
   zh: ef044103240ac9da
-/deepseek-harness-desktop/package:
+/dobeework-desktop/package:
   en: 4cd8a8da6977928d
   zh: 9f624855a2edac37
-/deepseek-harness-desktop/package/release-versions:
+/dobeework-desktop/package/release-versions:
   en: 0324169124c4414c
   zh: f591bee485467e93
-/deepseek-harness-desktop/package/runtime-file-selection:
+/dobeework-desktop/package/runtime-file-selection:
   en: f0e345fd89868803
   zh: fd2c775ad23fa2f0
-/deepseek-harness-desktop/package/upload-updates:
+/dobeework-desktop/package/upload-updates:
   en: 72073b2e72590067
   zh: 63b1f9790395c37d
-/deepseek-harness-desktop/package/unsigned-windows-test-installer:
+/dobeework-desktop/package/unsigned-windows-test-installer:
   en: cfd5780dd26a8e46
   zh: f7a16b1ede793b7b
-/deepseek-harness-desktop/package/windows-installer-interface:
+/dobeework-desktop/package/windows-installer-interface:
   en: 94ddb11f514d8dea
   zh: 15021ae8e3bc8a9c
-/deepseek-harness-desktop/package/windows-ev-signing:
+/dobeework-desktop/package/windows-ev-signing:
   en: 8efe3498dbe8686d
   zh: a88c16f20a9430f3
-/deepseek-harness-desktop/updates:
+/dobeework-desktop/updates:
   en: d0df867b69cbffa4
   zh: eeb47b79b86fe5ee
-/deepseek-harness-desktop/updates/mandatory-update-policy:
+/dobeework-desktop/updates/mandatory-update-policy:
   en: c00a0e7d32056ba9
   zh: a76dae44cb513d6f
-/deepseek-harness-desktop/updates/local-updater-qualification:
+/dobeework-desktop/updates/local-updater-qualification:
   en: bc50fd8a4d96c227
   zh: fb0a6ce80c31cda6
-/deepseek-harness-desktop/low-level-development-overrides:
+/dobeework-desktop/low-level-development-overrides:
   en: 0b225f914142ef0b
   zh: 9ffd07768d37824e
-/deepseek-harness-desktop/known-limitations:
-  en: 5b77213c86bbcfb6
-  zh: b34bf21773bb852b
-/deepseek-harness-desktop/dev-note:
+/dobeework-desktop/known-limitations:
+  en: 4e630203e5ddd4e1
+  zh: db63301ac6698dfe
+/dobeework-desktop/dev-note:
   en: 8e26b460ba31f21b
   zh: fbcd0307b3867125

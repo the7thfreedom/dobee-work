@@ -27,6 +27,8 @@ kind: "package-reference"
 
 在任何运行 agent 的地方挂载 `dsh-system-prompt`：它提供 `ctx.systemPrompt`，即每个提示词贡献所落入的注册表。贡献带作用域——通过 `agent.ctx` 注册只影响该 agent，并遮蔽同名全局项。
 
+下方默认开场白描述上游基础组件。DobeeWork 基于 base 的 profile 挂载[独立身份插件](../dobee-brand-identity/README.zh.md)，仅替换该开场白。
+
 <a id="configure-the-prompt"></a>
 ### 配置提示词
 

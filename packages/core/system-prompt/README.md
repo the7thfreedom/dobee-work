@@ -27,6 +27,8 @@ English | [中文](README.zh.md)
 
 Mount `dsh-system-prompt` wherever agents run: it provides `ctx.systemPrompt`, the registry every prompt contribution lands in. Contributions are scoped — registering through `agent.ctx` affects that agent alone and shadows a same-named global.
 
+The default opener below documents the upstream primitive. DobeeWork base-backed profiles mount the [independent identity plugin](../dobee-brand-identity/README.md), which replaces only that opener.
+
 <a id="configure-the-prompt"></a>
 ### Configure the prompt
 

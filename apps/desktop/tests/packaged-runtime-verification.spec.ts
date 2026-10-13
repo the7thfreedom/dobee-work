@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { readFile } from 'node:fs/promises'
 
 const { verifyDesktopRuntime } = vi.hoisted(() => ({
   verifyDesktopRuntime: vi.fn<(root: string, expected: string) => Promise<void>>(async () => undefined),
@@ -36,6 +37,15 @@ async function requiredRuntimeVersion(preparedRuntime?: string, preparedRuntimeV
 }
 
 describe('packaged runtime verification', () => {
+  it('uses DobeeWork for both the installer and Electron runtime product name', async () => {
+    const { createElectronBuilderConfig } = await import('../scripts/electron-builder-config.mjs')
+    const config = createElectronBuilderConfig(ENVIRONMENT, 'win32', 'x64')
+    expect(config).toHaveProperty('productName', 'DobeeWork')
+    expect(config).toHaveProperty('extraMetadata.productName', 'DobeeWork')
+    const manifest: unknown = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
+    expect(manifest).toHaveProperty('productName', 'DobeeWork')
+  })
+
   it('requires the product version when the target tree supplies the runtime', async () => {
     const productVersion = (JSON.parse(
       await import('node:fs/promises').then(async fs => fs.readFile(new URL('../package.json', import.meta.url), 'utf8')),

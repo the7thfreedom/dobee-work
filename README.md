@@ -1,24 +1,24 @@
-# DeepSeek Harness
+# DobeeWork
 
 English | [中文](README.zh.md)
 
-DeepSeek Harness (`dsh`) is an open-source agent harness developed by [DeepSeek AI](https://deepseek.com).
+DobeeWork (`dsh`) is an open-source agent harness maintained in [the7thfreedom/dobee-work](https://github.com/the7thfreedom/dobee-work), derived from [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness).
 
 It is built on an **everything-is-a-plugin** architecture and powered by [Cordis](https://github.com/cordiverse/cordis), whose design is described in [_A Programming Paradigm for Spatiotemporal Composability_](https://arxiv.org/abs/2608.25512).
 
-Documentation: [https://deepseek-harness.github.io/deepseek-harness/](https://deepseek-harness.github.io/deepseek-harness/)
+Documentation: [user guides](docs/user/index.md).
 
 ## Developer preview
 
-DeepSeek Harness is in _developer preview_ and iterating rapidly. **THERE WILL BE COMPATIBILITY-BREAKING CHANGES.**
+DobeeWork is in _developer preview_ and iterating rapidly. **THERE WILL BE COMPATIBILITY-BREAKING CHANGES.**
 
 Review the [safety notice](SAFETY.md) before running the project.
 
 ## Run
 
-### Run from `npm`
+### Upstream `npm` distribution
 
-Install `Node.js`, then run:
+The following command runs the upstream distribution, not this repository's DobeeWork customizations:
 
 ```sh
 npx @deepseek-ai/dsh web
@@ -31,8 +31,8 @@ The command starts the Web UI at `http://127.0.0.1:3080` by default and opens it
 To run from a repository checkout:
 
 ```sh
-git clone https://github.com/deepseek-ai/deepseek-harness.git
-cd deepseek-harness
+git clone https://github.com/the7thfreedom/dobee-work.git
+cd dobee-work
 pnpm install
 pnpm run build
 pnpm dsh web
@@ -42,9 +42,9 @@ pnpm dsh web
 
 ## Community and support
 
-- Submit feedback or bug reports through [GitHub Discussions](https://github.com/deepseek-ai/deepseek-harness/discussions).
+- Submit feedback or bug reports through [GitHub Issues](https://github.com/the7thfreedom/dobee-work/issues).
 - Add the [`dsh-plugin`](https://github.com/topics/dsh-plugin) topic to your plugin repository for discoverability.
-- Join <a href="https://discord.gg/4MrtZUhpxg">DeepSeek Harness Discord community</a>.
+- The [upstream Discord community](https://discord.gg/4MrtZUhpxg) supports the upstream project.
 
 ## Contributing
 
@@ -59,6 +59,8 @@ Start with the [development guide](docs/development.md) and [architecture docume
 For agents, follow [AGENTS.md](AGENTS.md).
 
 ## Citation
+
+The following citation identifies the upstream project, not a DobeeWork publication.
 
 ```bibtex
 @misc{deepseek-harness2026,

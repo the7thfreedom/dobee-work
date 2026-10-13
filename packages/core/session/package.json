@@ -1,6 +1,6 @@
 {
   "name": "@deepseek-ai/dsh-session",
-  "description": "Event-sourced session store for the DeepSeek Harness",
+  "description": "Event-sourced session store for the DobeeWork",
   "version": "0.2.1-alpha.1",
   "publishConfig": {
     "access": "public"
