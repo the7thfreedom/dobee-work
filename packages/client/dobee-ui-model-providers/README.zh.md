@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-在设置中的 **dobee 模型提供商** 页面配置 API 提供商或连接 GitHub Copilot 订阅。搜索左侧提供商，配置 Endpoint 和 API Key 或登录账号，同步模型并从可用列表中选择默认模型。API 密钥和订阅令牌与提供商设置分开保存。写入失败时保留草稿。
+在设置中的**模型**页面配置 API 提供商或连接 GitHub Copilot 订阅。搜索左侧提供商，配置 Endpoint 和 API Key 或登录账号，同步模型并从可用列表中选择默认模型。API 密钥和订阅令牌与提供商设置分开保存。写入失败时保留草稿。
 
 ## 目录
 

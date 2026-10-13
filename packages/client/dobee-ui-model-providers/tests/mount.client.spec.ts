@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { Context, Service } from '@deepseek-ai/cordis'
 import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
 import { SlotRegistry } from '@deepseek-ai/dsh-client-ui-renderer/client'
+import { resolveSlotLabel } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ConfigForm } from '@deepseek-ai/dsh-client-ui-settings/client'
 import type { TypertRemoteContribution } from '@deepseek-ai/dsh-typert-protocol'
 import { expect, it, vi } from 'vitest'
@@ -74,6 +75,12 @@ it('mounts the independent remote before UI and joins UI withdrawal before remot
     await fiber
     const entry = b.ctx.slots.entries('settings.section').find(item => item.component === Section)
     assert(entry?.inject !== undefined)
+    expect(entry.options.id).toBe('models')
+    expect(entry.options.order).toBe(10)
+    b.ctx.locale.setLocale('en')
+    expect(resolveSlotLabel(entry.options.label)).toBe('Models')
+    b.ctx.locale.setLocale('zh')
+    expect(resolveSlotLabel(entry.options.label)).toBe('模型')
     const face = entry.inject()
     assertFace(face)
     await vi.waitFor(() => { expect(face.hooks.connections.getSnapshot().draft?.id).toBe('deepseek') })

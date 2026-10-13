@@ -41,7 +41,7 @@ Credentials start empty and are not read back. Save failures retain drafts. Sett
 <a id="default-composition"></a>
 ## Default composition
 
-A dobee-owned bundle inserts the provider and UI plugins and changes the default-model configuration through a composition overlay, not through edits to upstream plugin code. Existing official routes remain available for historical sessions. Initial defaults do not issue network requests or silently select a different paid provider. Desktop verification uses an isolated Harness home and Electron user-data directory.
+A dobee-owned bundle disables upstream model providers and their settings UI, inserts the dobee provider and UI plugins, and changes the default-model configuration through a composition overlay, not through edits to upstream plugin code. Existing sessions using upstream routes require a configured dobee model selection before continuing. Initial defaults do not issue network requests or silently select a different paid provider. Desktop verification uses an isolated Harness home and Electron user-data directory.
 
 <a id="acceptance"></a>
 ## Acceptance
