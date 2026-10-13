@@ -1,6 +1,6 @@
 ---
 name: record-browser-gif
-description: Record browser or Web UI interaction demos as optimized GIFs using the available browser-control workflow, optional Playwright Videos for higher capture frame rates, and deterministic encoding, then attach the GIF to a pull request with `gh --attach`, falling back to a dedicated assets branch where attach cannot apply. Use when asked to make, record, or generate a GIF that demonstrates a browser workflow, and for every pull request that changes product-user-visible GUI behavior, which MUST include a GIF recorded from the pull request's real server and model flow.
+description: Record browser or Web UI interaction demos as optimized GIFs using browser control, optional Playwright Videos, and deterministic encoding; publish only when requested. Use when explicitly asked to make, record, generate, or attach a browser demonstration GIF, not merely because a pull request changes GUI behavior.
 ---
 
 # Record Browser GIF
@@ -9,11 +9,11 @@ Produce a short, truthful UI demonstration as a local GIF, and — only when the
 
 The [archived evidence-chain decision](../../notes/archived/process/2026-08-08-browser-gif-evidence-chain.md) records why one storyboard comes from one isolated run and why publication revalidates both the artifact and the demonstrated pull-request head.
 
-## Every GUI pull request includes a GIF
+## Recording scope and evidence
 
-A pull request that changes product-user-visible GUI behavior MUST include a demonstration GIF recorded with this skill and embedded in the pull request body via [the attach workflow](#publish-the-gif).
+GUI pull requests do not require a GIF or a real-model recording. Use this workflow only when a demonstration GIF is explicitly requested; relevant behavior tests, browser assertions, and snapshots remain required by the [testing policy](../../../docs/testing.md).
 
-The recording itself is part of the evidence: use a real server booted from that pull request's branch tree, a real API key, and real model rounds. Never substitute fixture queries, mock transports, synthetic event injection, or test-only hooks unless the user explicitly asked for a fixture recording. Next to the embed, state the exact demonstrated commit SHA, the tree and origin that served it, any mode flags or browser-state exceptions, and whether a real model round ran, so reviewers know exactly what the recording proves.
+For a requested recording, preserve the requested conditions. A real-model demonstration requires the real server, credentials, and model rounds; never silently substitute a fixture. Next to an embed, state the demonstrated commit SHA, tree and origin, mode flags or browser-state exceptions, and whether a real model round ran.
 
 ## Keep recording separate from publication
 
@@ -27,8 +27,8 @@ The recording itself is part of the evidence: use a real server booted from that
 A GIF for a specific pull request demonstrates that pull request's tree, so stage per pull request:
 
 1. Require a clean worktree, record its exact commit with `git rev-parse HEAD`, then build that recorded tree — here, `pnpm run build && pnpm run build:web`. A GIF recorded against another commit's build misattributes the evidence.
-2. Boot one server per port from that tree with fresh scratch `DSH_HOME`, `DSH_AGENTS_HOME`, workspace, and session state. Give the browser a fresh isolated context or profile as well; if the browser workflow cannot create one, clear that origin's cookies and site storage before navigation so persisted client state cannot affect the evidence. Source the root `.env` for the API key through the application's normal path; never echo the key.
-3. Treat one storyboard as one evidence run: every published frame comes from that server and those state roots, workspace, session, and model-backed scenario run. If capture automation fails, discard its frames and rerun from fresh roots; never splice frames from separate runs.
+2. Boot one server per port from that tree with fresh scratch `DSH_HOME`, `DSH_AGENTS_HOME`, workspace, and session state. Give the browser a fresh isolated context or profile as well; if the browser workflow cannot create one, clear that origin's cookies and site storage before navigation so persisted client state cannot affect the evidence. When the requested recording uses a real model, load credentials through the application's normal configuration path; never echo the key.
+3. Treat one storyboard as one evidence run: every published frame comes from that server and those state roots, workspace, session, and declared transport. If capture automation fails, discard its frames and rerun from fresh roots; never splice frames from separate runs.
 4. When switching between pull requests, stop the old server by PID or an exact match on its command line. A broad `pkill -f` pattern can match and kill the shell that launched it — including your own.
 
 ## Record the flow

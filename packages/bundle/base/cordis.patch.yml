@@ -13,6 +13,9 @@
 # driven); the grouping is for readers.
 
 - insert:
+    - id: dobee-brand-identity
+      name: '@deepseek-ai/dsh-dobee-brand-identity'
+
     - id: tool-plugin-manager
       name: '@deepseek-ai/dsh-plugin-manager/tools'
       disabled: true

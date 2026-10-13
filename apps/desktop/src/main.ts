@@ -3,6 +3,7 @@ import { WINDOWS_TITLEBAR_HEIGHT } from './windows-layout.ts'
 /** Electron shell: desktop project ownership, custom protocol, windows, and lifecycle. */
 
 import { readFile, writeFile } from 'node:fs/promises'
+import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
@@ -59,6 +60,7 @@ import { DesktopUpdateOverlays } from './update-overlay.ts'
 import { DesktopQuitConfirmation } from './quit-confirmation.ts'
 import { DesktopTray } from './tray.ts'
 import { DesktopBackgroundNotice } from './background-notice.ts'
+import { dobeeDesktopLogsPath, dobeeDesktopUserDataPath } from './dobee-data-paths.ts'
 
 let focusPrimaryWindow = (): void => {}
 let stopForRecovery = async (): Promise<void> => {}
@@ -78,9 +80,19 @@ let backendReady = false
 /** Error-level console output of the primary window, attached to crash reports. */
 const rendererConsole = new RendererConsoleTail()
 
+if (app.name === 'DobeeWork' && !app.commandLine.hasSwitch('user-data-dir')) {
+  const directory = dobeeDesktopUserDataPath(app.getPath('appData'))
+  mkdirSync(directory, { recursive: true, mode: 0o700 })
+  app.setPath('userData', directory)
+}
+
 // Platform-conventional logs directory (macOS ~/Library/Logs/<name>, otherwise under userData);
 // set before ready so the first fatal report already resolves under it.
-app.setAppLogsPath()
+if (app.name === 'DobeeWork' && process.platform === 'darwin') {
+  app.setAppLogsPath(dobeeDesktopLogsPath(app.getPath('home')))
+} else {
+  app.setAppLogsPath()
+}
 
 function currentDesktopLocale(): ReturnType<typeof resolveDesktopLocale> {
   return resolveDesktopLocale(windowsLanguage ?? app.getLocale())
@@ -925,7 +937,7 @@ async function main(): Promise<void> {
   const applicationIconPath = development ? join(app.getAppPath(), 'resources', 'icon-windows.png')
     : join(process.resourcesPath, 'icon.png')
   app.setAboutPanelOptions({
-    applicationName: 'DeepSeek Harness',
+    applicationName: 'DobeeWork',
     applicationVersion: app.getVersion(),
     // The release has no separate build number; omit Electron's bundle version.
     version: '',

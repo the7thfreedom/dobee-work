@@ -1,10 +1,12 @@
 # AGENTS.md
 
-DeepSeek Harness is an all-plugin Cordis agent harness. Read [docs/architecture.md](docs/architecture.md) before changing `packages/`; follow [docs/AGENTS.md](docs/AGENTS.md) for documentation.
+DobeeWork is an all-plugin Cordis agent harness derived from deepseek-harness. Read [docs/architecture.md](docs/architecture.md) before changing `packages/`; follow [docs/AGENTS.md](docs/AGENTS.md) for documentation.
 
 For dobee-work upstream updates, follow the [manual synchronization guide](docs/cookbook/syncing-dobee-upstream.md); retain upstream ancestry with merge commits and run `verify:dobee-customizations` against the pre-sync commit. Review every reported adaptation; never bypass the customization hooks.
 
-**dobee-work customization.** Do not modify upstream plugins. Implement every dobee-work customization as an independent plugin whose name starts with `dobee`.
+**DobeeWork customization.** Prefer configuration and extension points; product behavior belongs in independent `dobee` plugins, never upstream copies. Reviewed mechanical branding may edit upstream text, assets, packaging, and docs without behavior changes. Missing extension points permit minimal reviewed reusable changes, not embedded product behavior.
+
+**Brand identity.** Use `DobeeWork`; preserve upstream attribution, copyright, archives, and historical Sessions. Keep package names, `dsh`, providers, protocols, and data paths unless separately migrated. Run `verify:dobee-branding`; [brand guidelines](BRAND_GUIDELINES.md) own exceptions.
 
 ## Pre-stable APIs and released Session data
 
@@ -122,6 +124,7 @@ Before pushing, follow [dsh-pre-push-checks](.agents/skills/dsh-pre-push-checks/
 - Never default to the full suite or repeat a passing check for commit or push. CI owns exhaustive coverage and the platform matrix; rehearse all locally only by explicit request, for CI diagnosis, or for an irreducibly repository-wide change.
 - `test:coverage`, not `test`, is the CI coverage gate ([why](docs/testing.md)).
 - **Web browser automation and GIF recording:** launch with `pnpm dsh web --patch apps/web/tests/pin-browse-picker.overlay.yml` to use the [in-page directory picker](apps/web/tests/pin-browse-picker.overlay.yml); omit this override only when testing native picker behavior explicitly.
+- **GUI PR evidence:** relevant browser tests and snapshots are required; GIFs and real-model recordings are optional unless explicitly requested.
 
 ## Secrets / .env
 
@@ -171,11 +174,11 @@ Read [docs/defensive-patterns.md](docs/defensive-patterns.md) before lifecycle, 
 
 ## Type safety and documentation
 
-Everything compiles under `strict: true` with `noImplicitAny`; every remaining `any` explains why narrowing is infeasible. Every module and export has concise JSDoc for its non-obvious contract; function-like exports include `@param`/`@returns`, as enforced by `verify-export-jsdoc`. Heritage-declared members, plugin-protocol slots, and constructors keep their docs at the declaring Service Definition, protocol, or class.
+Compile under `strict: true` and `noImplicitAny`; each `any` explains why narrowing is infeasible. Document non-obvious module/export contracts; function exports include `@param`/`@returns` (`verify-export-jsdoc`). Inherited members, protocol slots, and constructors retain docs at their declaring owner.
 
-Comments and docs state complete contracts and context, not reasoning transcripts. Use direct, concrete terms. Do not use metaphors. Before writing `contract`, `boundary`, or `shape`, ask whether a more exact term names the subject: write `response fields`, `JSON validation`, or `ESM exports` instead of `response shape`, `validation boundary`, or `module shape`. Keep `contract` for preconditions, postconditions, invariants, compatibility promises, and other obligations that callers, callees, implementers, providers, producers, or consumers rely on. Keep a literal process, wire, security, transaction, or lifecycle boundary. Do not narrate control flow or tests, preserve review history, or restate code. Keep behavior, failure, timing, ownership, and safe-use facts; link the rationale. Use [dsh-prose-standard](.agents/skills/dsh-prose-standard/SKILL.md) for decisions. Wire mechanically checkable invariants into an executed top-level gate and prove each changed acceptance path rejects an invalid case. Use narrow, justified exceptions instead of disabling a rule globally.
+Comments and docs preserve behavior, failure, timing, ownership, and safe-use facts, not control-flow narration or review history. Use direct, concrete terms and link rationale; [dsh-prose-standard](.agents/skills/dsh-prose-standard/SKILL.md) owns editorial decisions. Enforce mechanically checkable invariants in an executed top-level gate, exercise invalid cases, and use narrow justified exceptions rather than disabling rules globally.
 
-Docs accompany every code change: update affected README and JSDoc contracts together. Routine bilingual work follows [docs/AGENTS.md](docs/AGENTS.md); only explicit user invocation may run `dsh-translate-docs`. Current-state prose, one physical line per paragraph, one home per fact, and word budgets live there.
+Update affected README and JSDoc contracts with behavior changes. Mechanical brand edits need no new Agent Note, upgrade guide, or unrelated documentation. Routine bilingual work follows [docs/AGENTS.md](docs/AGENTS.md); only explicit user invocation may run `dsh-translate-docs`. Current-state prose, one physical line per paragraph, one home per fact, and word budgets live there.
 
 ## Editing these instructions
 

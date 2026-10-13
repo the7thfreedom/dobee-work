@@ -1,6 +1,6 @@
 {
   "name": "@deepseek-ai/dsh-storage",
-  "description": "Storage hub (ctx.storage): named backend registry plus mounted data-form facilities for the DeepSeek Harness",
+  "description": "Storage hub (ctx.storage): named backend registry plus mounted data-form facilities for the DobeeWork",
   "version": "0.2.1-alpha.1",
   "publishConfig": {
     "access": "public"

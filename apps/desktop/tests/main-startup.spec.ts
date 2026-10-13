@@ -3,7 +3,7 @@ import { WINDOWS_TITLEBAR_HEIGHT } from '../src/windows-layout.ts'
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import type { IpcMainInvokeEvent } from 'electron'
 import { join } from 'node:path'
-import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import type { MenuItemConstructorOptions, MessageBoxOptions } from 'electron'
 import { DESKTOP_IPC, type DesktopUpdateState } from '../src/ipc.ts'
@@ -159,6 +159,8 @@ const harness = await vi.hoisted(async () => {
     getVersion: () => '1.0.0',
     getAppPath: (): string => 'desktop-test-app',
     setAppLogsPath: vi.fn(),
+    setPath: vi.fn(),
+    commandLine: { hasSwitch: vi.fn(() => false) },
     getPath: vi.fn<(name: string) => string>(),
     setAboutPanelOptions: vi.fn<(options: Electron.AboutPanelOptionsOptions) => void>(),
     requestSingleInstanceLock: () => true,
@@ -392,6 +394,8 @@ function applicationMenuItems(): MenuItemConstructorOptions[] {
 beforeEach(() => {
   vi.resetModules()
   vi.clearAllMocks()
+  harness.app.name = 'Desktop test'
+  harness.app.commandLine.hasSwitch.mockReturnValue(false)
   harness.dialog.showMessageBox.mockReset()
   harness.dialog.showMessageBox.mockResolvedValue({ response: 1 })
   testAuth.login.mockReset()
@@ -400,7 +404,9 @@ beforeEach(() => {
   harness.reset()
   const userData = mkdtempSync(join(tmpdir(), 'dsh-main-user-data-'))
   onTestFinished(() => { rmSync(userData, { recursive: true, force: true }) })
-  harness.app.getPath.mockImplementation(name => name === 'userData' ? userData : `desktop-test-${name}`)
+  harness.app.getPath.mockImplementation(name => name === 'userData' ? userData
+    : name === 'appData' ? join(userData, 'app-data')
+      : name === 'home' ? join(userData, 'home') : `desktop-test-${name}`)
   harness.dialog.showMessageBox.mockImplementation((options: { title?: string }) => {
     if (options.title !== en.startupFailed) return Promise.resolve({ response: 1 })
     harness.dialogShown.resolve()
@@ -437,6 +443,29 @@ afterEach(async () => {
 })
 
 describe('desktop main startup', () => {
+  it('retains the existing macOS crash-report directory with the new product name', async () => {
+    vi.stubGlobal('process', { ...process, platform: 'darwin' })
+    harness.app.name = 'DobeeWork'
+    await readyForUpdate()
+    expect(harness.app.setAppLogsPath).toHaveBeenCalledWith(
+      join(harness.app.getPath('home'), 'Library', 'Logs', ['DeepSeek', 'Harness'].join(' ')),
+    )
+  })
+
+  it.each([false, true])('preserves existing desktop storage unless a user-data override is supplied (%s)', async (override) => {
+    harness.app.name = 'DobeeWork'
+    harness.app.commandLine.hasSwitch.mockReturnValue(override)
+    await readyForUpdate()
+    const directory = join(harness.app.getPath('appData'), ['DeepSeek', 'Harness'].join(' '))
+    if (override) {
+      expect(harness.app.setPath).not.toHaveBeenCalled()
+      expect(existsSync(directory)).toBe(false)
+    } else {
+      expect(harness.app.setPath).toHaveBeenCalledWith('userData', directory)
+      expect(existsSync(directory)).toBe(true)
+    }
+  })
+
   it('routes shell update documents and assets through the registered main protocol handler', async () => {
     const root = join(import.meta.dirname, '..')
     vi.spyOn(harness.app, 'getAppPath').mockReturnValue(root)
@@ -521,7 +550,7 @@ describe('desktop main startup', () => {
     await vi.advanceTimersByTimeAsync(0)
     const zh = locale === 'zh-CN'
     expect(harness.dialog.showMessageBox).toHaveBeenLastCalledWith(expect.objectContaining({
-      type: 'info', title: zh ? '关于 DeepSeek Harness' : 'About DeepSeek Harness', message: 'DeepSeek Harness',
+      type: 'info', title: zh ? '关于 DobeeWork' : 'About DobeeWork', message: 'DobeeWork',
       detail: zh ? '版本 V1.0.0' : 'Version V1.0.0', buttons: [zh ? '确定' : 'OK'], cancelId: 0,
     }))
     // A dialog that cannot open is logged, not surfaced as an unhandled rejection.
@@ -845,7 +874,7 @@ describe('desktop main startup', () => {
     expect(() => handler(event, 'application', NaN, 34)).toThrow('invalid popup request')
     const application = handler(event, 'application', 48, 34)
     expect(harness.menu.buildFromTemplate.mock.lastCall![0].map(item => item.label ?? item.type)).toEqual([
-      '关于 DeepSeek Harness', 'separator', '检查更新…', '管理 dsh 命令…', 'separator', '退出',
+      '关于 DobeeWork', 'separator', '检查更新…', '管理 dsh 命令…', 'separator', '退出',
     ])
     expect(harness.popup.mock.lastCall![0]).toMatchObject({ window, x: 48, y: 34 })
     expect(harness.popup.mock.lastCall![0].callback).toBeTypeOf('function')

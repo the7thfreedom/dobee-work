@@ -8,6 +8,8 @@ The dsh-base bundle patch shared by the web, headless, sdk, and acp profiles; th
 ```mermaid
 flowchart LR
   cfg["packages/bundle/base/cordis.patch.yml<br/>cordis.yml"]
+  plugin_dsh_base_dobee_brand_identity["dobee-brand-identity<br/>@deepseek-ai/dsh-dobee-brand-identity"]
+  cfg --> plugin_dsh_base_dobee_brand_identity
   plugin_dsh_base_tool_plugin_manager["tool-plugin-manager<br/>@deepseek-ai/dsh-plugin-manager/tools"]
   cfg --> plugin_dsh_base_tool_plugin_manager
   plugin_dsh_base_plugin_manager["plugin-manager<br/>@deepseek-ai/dsh-plugin-manager"]
@@ -200,6 +202,7 @@ flowchart LR
 
 | Plugin id | Package / module |
 | --- | --- |
+| `dobee-brand-identity` | `@deepseek-ai/dsh-dobee-brand-identity` |
 | `tool-plugin-manager` | `@deepseek-ai/dsh-plugin-manager/tools` |
 | `plugin-manager` | `@deepseek-ai/dsh-plugin-manager` |
 | `timer` | `@deepseek-ai/cordis-plugin-timer` |

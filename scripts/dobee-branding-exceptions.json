@@ -1,0 +1,227 @@
+[
+  {
+    "file": "docs/i18n/style-samples.md",
+    "text": "> This document describes the architecture of the DeepSeek Harness — the foundation of **DeepSeek Code**. The governing principle, from the microkernel design discussion: **everything is a plugin**. The core is deliberately tiny — a handful of abstract services plus one concrete loop plugin (`dsh-agent-loop`) — and every product feature is a plugin against the extension API described here, without modifying the loop.",
+    "reason": "Quoted upstream prose retained as a translation style sample; it does not describe DobeeWork as a DeepSeek product."
+  },
+  {
+    "file": "docs/i18n/style-samples.md",
+    "text": "本文介绍 DeepSeek Harness 整体架构，它是 **DeepSeek Code** 的底层基座。微内核设计讨论中确立了核心设计准则：**一切皆插件**。内核刻意做得极精简，仅包含少量抽象服务，外加一个实体循环插件 `dsh-agent-loop`。所有产品功能均基于本文定义的扩展接口开发为独立插件，无需改动主循环逻辑。",
+    "reason": "Quoted upstream prose retained as a translation style sample; it does not describe DobeeWork as a DeepSeek product."
+  },
+  {
+    "file": "packages/core/dobee-brand-identity/src/index.ts",
+    "text": "const UPSTREAM_IDENTITY = 'You are an AI agent powered by DeepSeek Harness.'",
+    "reason": "Exact upstream-default comparison preserves explicit scoped identities instead of overwriting them."
+  },
+  {
+    "file": "README.md",
+    "text": "DobeeWork (`dsh`) is an open-source agent harness maintained in [the7thfreedom/dobee-work](https://github.com/the7thfreedom/dobee-work), derived from [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness).",
+    "reason": "Accurate upstream attribution and original publication title."
+  },
+  {
+    "file": "README.md",
+    "text": "  title={DeepSeek Harness: Everything is a Plugin},",
+    "reason": "Accurate upstream attribution and original publication title."
+  },
+  {
+    "file": "README.zh.md",
+    "text": "DobeeWork（`dsh`）是在 [the7thfreedom/dobee-work](https://github.com/the7thfreedom/dobee-work) 维护的开源 agent harness（智能体框架），基于 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 开发。",
+    "reason": "Accurate upstream attribution and original publication title."
+  },
+  {
+    "file": "README.zh.md",
+    "text": "  title={DeepSeek Harness: Everything is a Plugin},",
+    "reason": "Accurate upstream attribution and original publication title."
+  },
+  {
+    "file": "BRAND_GUIDELINES.md",
+    "text": "DobeeWork derives from [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness). Preserve accurate upstream references, citations, copyright notices, and third-party licenses. These identify their original subjects and must not be relabeled as DobeeWork.",
+    "reason": "The linked name identifies the actual upstream project."
+  },
+  {
+    "file": "BRAND_GUIDELINES.zh.md",
+    "text": "DobeeWork 基于 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 开发。保留准确的上游引用、出版物引用、版权声明及第三方许可证。这些内容标识原始主体，不得改为 DobeeWork。",
+    "reason": "The linked name identifies the actual upstream project."
+  },
+  {
+    "file": "apps/desktop/src/dobee-data-paths.ts",
+    "text": "const LEGACY_DESKTOP_DIRECTORY = 'DeepSeek Harness'",
+    "reason": "Existing Electron storage and macOS logs directories retained without migrating user files."
+  },
+  {
+    "file": ".agents/notes/implemented/architecture/2026-07-24-single-harness-home-resolver.md",
+    "text": "The harness had two inconsistent conventions for \"where does DeepSeek Harness user data live\":",
+    "reason": "Historical problem statement records the original product naming."
+  },
+  {
+    "file": ".agents/notes/implemented/architecture/2026-07-24-single-harness-home-resolver.zh.md",
+    "text": "对于\"DeepSeek Harness 用户数据存放在哪里\"，harness 里存在两套互不一致的约定：",
+    "reason": "Historical problem statement records the original product naming."
+  },
+  {
+    "file": "docs/postmortem/0003-web-agent-gui-feedback-loop.md",
+    "text": "The session ran inside the DeepSeek Harness Web GUI at port 3081 while its selected Workspace was an empty `test/` directory. The model request named neither the GUI nor its source checkout, URL, process, or update mode. Repository affordances exposed `apps/web` with a Vite development script, while the full browser composition lived behind `dsh web`.",
+    "reason": "Incident evidence retains the product name at the time of the incident."
+  },
+  {
+    "file": "docs/postmortem/0003-web-agent-gui-feedback-loop.zh.md",
+    "text": "该会话运行在端口 3081 的 DeepSeek Harness Web GUI 中，而用户选择的 Workspace 是空的 `test/` 目录。模型请求既未指明该 GUI，也未提供它的源码检出目录、URL、进程或更新模式。仓库在 `apps/web` 中提供了 Vite 开发脚本，完整的浏览器组合则由 `dsh web` 提供。",
+    "reason": "Incident evidence retains the product name at the time of the incident."
+  },
+  {
+    "file": "packages/client/ui-brand-official/README.md",
+    "text": "description: \"Official DeepSeek Harness brand occupants for the sidebar, active only in official builds; for users and maintainers choosing or replacing brand presentation.\"",
+    "reason": "Preserved upstream-specific brand plugin, absent from DobeeWork default profiles."
+  },
+  {
+    "file": "packages/client/ui-brand-official/README.md",
+    "text": "This package gives an `official` client build the DeepSeek Harness mark and name in the sidebar. Other build profiles keep the shell's fish mark and local-build label, while the conversation hero always uses the animated fish. Choose it for deployments branded as DeepSeek Harness; deployments with another identity should provide a replacement brand package. It has no runtime state and does not affect model requests.",
+    "reason": "Preserved upstream-specific brand plugin, absent from DobeeWork default profiles."
+  },
+  {
+    "file": "packages/client/ui-brand-official/README.zh.md",
+    "text": "description: \"面向侧栏的官方 DeepSeek Harness 品牌填充，仅在官方构建中生效；供选择或替换品牌呈现的用户与维护者阅读。\"",
+    "reason": "Preserved upstream-specific brand plugin, absent from DobeeWork default profiles."
+  },
+  {
+    "file": "packages/client/ui-brand-official/README.zh.md",
+    "text": "本包让以 `official` profile 构建的客户端在侧栏显示 DeepSeek Harness 标志与名称。其他构建 profile 保留外壳的鱼形标志与本地构建标签，会话首屏则始终使用动画鱼。品牌为 DeepSeek Harness 的部署应选择本包；使用其他品牌的部署应提供替代品牌包。本包不保留运行时状态，也不影响模型请求。",
+    "reason": "Preserved upstream-specific brand plugin, absent from DobeeWork default profiles."
+  },
+  {
+    "file": "packages/client/ui-brand-official/package.json",
+    "text": "  \"description\": \"Official DeepSeek Harness brand occupants for the Web client's sidebar slots\",",
+    "reason": "Preserved upstream-specific brand plugin, absent from DobeeWork default profiles."
+  },
+  {
+    "file": "packages/client/ui-brand-official/src/client/index.ts",
+    "text": "/** Official DeepSeek Harness occupants for the generic browser-brand slots. */",
+    "reason": "Preserved upstream-specific brand plugin, absent from DobeeWork default profiles."
+  },
+  {
+    "file": "packages/core/system-prompt/README.md",
+    "text": "| `includeHarnessIdentity` | `true` | Include the fixed `You are an AI agent powered by DeepSeek Harness.` first-party opener at order −1000. Set false only when a compatibility deployment owns the complete system prompt. |",
+    "reason": "The upstream primitive opener is documented verbatim; the independent DobeeWork identity plugin replaces it in product profiles."
+  },
+  {
+    "file": "packages/core/system-prompt/README.md",
+    "text": "You are an AI agent powered by DeepSeek Harness.",
+    "reason": "The upstream primitive opener is documented verbatim; the independent DobeeWork identity plugin replaces it in product profiles."
+  },
+  {
+    "file": "packages/core/system-prompt/README.zh.md",
+    "text": "| `includeHarnessIdentity` | `true` | 是否包含顺序为 −1000 的第一方固定开场白 `You are an AI agent powered by DeepSeek Harness.`。仅当兼容性部署拥有完整系统提示词时设为 false。 |",
+    "reason": "The upstream primitive opener is documented verbatim; the independent DobeeWork identity plugin replaces it in product profiles."
+  },
+  {
+    "file": "packages/core/system-prompt/README.zh.md",
+    "text": "You are an AI agent powered by DeepSeek Harness.",
+    "reason": "The upstream primitive opener is documented verbatim; the independent DobeeWork identity plugin replaces it in product profiles."
+  },
+  {
+    "file": "packages/core/system-prompt/src/index.ts",
+    "text": "        text: 'You are an AI agent powered by DeepSeek Harness.',",
+    "reason": "Upstream primitive identity is preserved; product profiles compose the independent replacement."
+  },
+  {
+    "file": "packages/core/system-prompt/tests/system-prompt.spec.ts",
+    "text": "const IDENTITY = 'You are an AI agent powered by DeepSeek Harness.'",
+    "reason": "Regression coverage for the unchanged upstream primitive without the product replacement."
+  },
+  {
+    "file": "packages/preset/agent-preset/skills/cordis-composition-reference/references/packages.md",
+    "text": "| `@deepseek-ai/dsh-client-ui-brand-official` | no | Official DeepSeek Harness brand occupants for the Web client's sidebar slots |",
+    "reason": "Generated description of the preserved upstream-specific brand plugin."
+  },
+  {
+    "file": "apps/web/tests/fixtures/assembled-remote.fixture.json",
+    "text": "                  \"arguments\": \"{\\\"queries\\\":[\\\"deepseek harness architecture\\\"]}\"",
+    "reason": "Recorded external search queries and sources identify the upstream repository, not DobeeWork."
+  },
+  {
+    "file": "apps/web/tests/fixtures/assembled-remote.fixture.json",
+    "text": "                    \"arguments\": \"{\\\"queries\\\":[\\\"deepseek harness architecture\\\"]}\"",
+    "reason": "Recorded external search queries and sources identify the upstream repository, not DobeeWork."
+  },
+  {
+    "file": "apps/web/tests/fixtures/assembled-remote.fixture.json",
+    "text": "            \"arguments\": \"{\\\"queries\\\":[\\\"deepseek harness architecture\\\"]}\"",
+    "reason": "Recorded external search queries and sources identify the upstream repository, not DobeeWork."
+  },
+  {
+    "file": "apps/web/tests/fixtures/assembled-remote.fixture.json",
+    "text": "                  \"text\": \"Search results for deepseek harness architecture.\"",
+    "reason": "Recorded external search queries and sources identify the upstream repository, not DobeeWork."
+  },
+  {
+    "file": "apps/web/tests/fixtures/assembled-remote.fixture.json",
+    "text": "              \"answer\": \"DeepSeek Harness is a plugin-based agent harness on vendored Cordis where **every capability is a plugin**.\",",
+    "reason": "Recorded external search queries and sources identify the upstream repository, not DobeeWork."
+  },
+  {
+    "file": "apps/web/tests/fixtures/assembled-remote.fixture.json",
+    "text": "                  \"title\": \"DeepSeek Harness — plugin-based agent harness\",",
+    "reason": "Recorded external search queries and sources identify the upstream repository, not DobeeWork."
+  },
+  {
+    "file": "snapshots/web/web-search-round/ui.expected.md",
+    "text": "- text: Use web_search once with queries [\"DeepSeek Harness snapshot search\",\"DeepSeek Harness multi-query search\"]. Then reply exactly SEARCH_DONE and stop. {{clock}}",
+    "reason": "The original recorded user searches for the upstream project; displayed query text remains verbatim."
+  },
+  {
+    "file": "snapshots/web/web-search-round/ui.expected.md",
+    "text": "- button \"Search DeepSeek Harness snapshot search, DeepSeek Harness multi-query search\"",
+    "reason": "The original recorded user searches for the upstream project; displayed query text remains verbatim."
+  },
+  {
+    "file": "packages/core/agent-loop/tests/loop.spec.ts",
+    "text": "    expect(systemOf(request)).toBe('You are an AI agent powered by DeepSeek Harness.\\n\\nYou are a test agent on mock.\\n\\nUse the noop tool wisely.')",
+    "reason": "This fixture composes the upstream prompt primitive directly, without the DobeeWork product identity plugin."
+  },
+  {
+    "file": "packages/core/agent-loop/tests/loop.spec.ts",
+    "text": "    expect(systemOf(adapter.requests[0])).toBe('You are an AI agent powered by DeepSeek Harness.\\n\\nWorking in /work/space.')",
+    "reason": "This fixture composes the upstream prompt primitive directly, without the DobeeWork product identity plugin."
+  },
+  {
+    "file": "packages/core/agent-loop/tests/loop.spec.ts",
+    "text": "    expect(systemOf(adapter.requests[0])).toBe('You are an AI agent powered by DeepSeek Harness.\\n\\nIn /rescued.')",
+    "reason": "This fixture composes the upstream prompt primitive directly, without the DobeeWork product identity plugin."
+  },
+  {
+    "file": "packages/core/agent-loop/tests/loop.spec.ts",
+    "text": "    expect(systemOf(adapter.requests[0])).toBe('You are an AI agent powered by DeepSeek Harness.\\n\\nYou run on mock.')",
+    "reason": "This fixture composes the upstream prompt primitive directly, without the DobeeWork product identity plugin."
+  },
+  {
+    "file": "packages/core/agent-loop/tests/loop.spec.ts",
+    "text": "      expect(systemOf(adapter.requests[1])).toBe('You are an AI agent powered by DeepSeek Harness.')",
+    "reason": "This fixture composes the upstream prompt primitive directly, without the DobeeWork product identity plugin."
+  },
+  {
+    "file": "packages/preset/persona/tests/persona.spec.ts",
+    "text": "      expect(renderPrompt(assembly)).toBe('You are an AI agent powered by DeepSeek Harness.\\n\\nPreset.\\n\\nUse tools.\\n\\nWorkspace /local.')",
+    "reason": "This fixture composes the upstream prompt primitive directly, without the DobeeWork product identity plugin."
+  },
+  {
+    "file": "packages/fs/tool-fs/tests/tools.spec.ts",
+    "text": "  return ['You are an AI agent powered by DeepSeek Harness.', ...sections].join('\\n\\n')",
+    "reason": "This fixture composes the upstream prompt primitive directly, without the DobeeWork product identity plugin."
+  },
+  {
+    "file": "packages/fs/tool-fs-search/tests/tools.spec.ts",
+    "text": "  return ['You are an AI agent powered by DeepSeek Harness.', ...sections].join('\\n\\n')",
+    "reason": "This fixture composes the upstream prompt primitive directly, without the DobeeWork product identity plugin."
+  },
+  {
+    "file": "packages/web/tool-web/tests/tool-web.spec.ts",
+    "text": "  return ['You are an AI agent powered by DeepSeek Harness.', ...sections].join('\\n\\n')",
+    "reason": "This fixture composes the upstream prompt primitive directly, without the DobeeWork product identity plugin."
+  },
+  {
+    "file": "packages/boot/app-boot/tests/app-boot.spec.ts",
+    "text": "      const identityAt = rendered.indexOf('You are an AI agent powered by DeepSeek Harness.')",
+    "reason": "This fixture composes the upstream prompt primitive directly, without the DobeeWork product identity plugin."
+  }
+]

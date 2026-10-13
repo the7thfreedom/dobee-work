@@ -1,0 +1,49 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/core/dobee-brand-identity/README.md
+/:
+  en: 6afbb00d0e536752
+  zh: 84add7945a0387c8
+/deepseek-ai-dsh-dobee-brand-identity:
+  en: b8a73db91cb5aea4
+  zh: 0d6f5ec23c3ad11c
+/deepseek-ai-dsh-dobee-brand-identity/summary:
+  en: 43bb823cd88b9ae1
+  zh: acd6c7b9d2c99e7b
+/deepseek-ai-dsh-dobee-brand-identity/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 0ddfaed0f41243e6
+/deepseek-ai-dsh-dobee-brand-identity/use-this-package:
+  en: 8ce980f6d518a729
+  zh: 858cabf682448420
+/deepseek-ai-dsh-dobee-brand-identity/understand-the-implementation:
+  en: 962ff481885e0ee9
+  zh: 4d2da901b30e6024
+/deepseek-ai-dsh-dobee-brand-identity/further-exploration:
+  en: ead103690d5b5386
+  zh: 9bcbda84d7068ee3
+/deepseek-ai-dsh-dobee-brand-identity/model-experience:
+  en: 215e7ba838619b7b
+  zh: 215e7ba838619b7b
+/deepseek-ai-dsh-dobee-brand-identity/model-experience/system-prompt-identity:
+  en: 4e95e6e843618e5c
+  zh: 4e95e6e843618e5c
+/deepseek-ai-dsh-dobee-brand-identity/model-experience/system-prompt-identity/what-the-model-sees:
+  en: a2fb76371be0be4f
+  zh: db9a987aeb314ca7
+/deepseek-ai-dsh-dobee-brand-identity/model-experience/system-prompt-identity/what-the-model-sees/harness-identity:
+  en: 40effd71cb503319
+  zh: 40effd71cb503319
+/deepseek-ai-dsh-dobee-brand-identity/model-experience/system-prompt-identity/token-effect:
+  en: a93d2609d8f95f2a
+  zh: ba93b6365a0f7bf1
+/deepseek-ai-dsh-dobee-brand-identity/model-experience/system-prompt-identity/kv-cache-effect:
+  en: deae76afe390d963
+  zh: d058b7341d3c859b
+/deepseek-ai-dsh-dobee-brand-identity/known-limitations-and-deferred-work:
+  en: 6138ca82c07a53b2
+  zh: 379c776983cdd034
+/deepseek-ai-dsh-dobee-brand-identity/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 8ec3e73528ddb1a6

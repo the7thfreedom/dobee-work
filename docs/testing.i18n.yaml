@@ -11,9 +11,9 @@
 /testing-policy/how-specs-execute:
   en: 298c13b105e86eae
   zh: 4f1b0b7742fb7b49
-/testing-policy/the-with-key-policy-inference-is-cheap-here:
-  en: d555af53068bf523
-  zh: ddc4265e5de5b3be
+/testing-policy/the-with-key-policy-real-provider-evidence:
+  en: f7d5bcdabaa4578b
+  zh: a439342dd52877ae
 /testing-policy/prefer-the-real-implementation-over-a-mock:
   en: 96a5bdcea4960b25
   zh: 98ad9d468e55a5ed

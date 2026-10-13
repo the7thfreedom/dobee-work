@@ -8,9 +8,14 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
-import { expect, it, onTestFinished } from 'vitest'
+import { afterAll, beforeAll, expect, it, onTestFinished } from 'vitest'
 import { launchWebScaffold, captureStableAria, compareOrRefreshGolden, webSnapshotMode, watchConsole } from './scaffold.ts'
 import { ZH_BROWSER_LOCALE } from './support.ts'
+import { isolateGitCommandLineConfig } from '../../../packages/boot/plugin-manager/tests/git-environment.ts'
+
+let restoreGitConfiguration: () => void
+beforeAll(() => { restoreGitConfiguration = isolateGitCommandLineConfig() })
+afterAll(() => { restoreGitConfiguration() })
 
 it.each(['network', 'timeout'] as const)('offers a mirror after a GitHub %s, then another way on the mirror, and waits for replacement input', async (failure) => {
   const scratch = await mkdtemp(join(tmpdir(), 'dsh-install-github-'))

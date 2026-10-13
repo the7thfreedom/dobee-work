@@ -80,7 +80,7 @@ x-client-bundled-dsh-version: 0.1.3-rc.2
   "msg": "Client version too low",
   "data": {
     "show_content": {
-      "title": "请更新 DeepSeek Harness",
+      "title": "请更新 DobeeWork",
       "detail": "当前版本已停止支持，请下载并安装新版本。"
     },
     "desktop_app_link": "https://example.com/harness/download"

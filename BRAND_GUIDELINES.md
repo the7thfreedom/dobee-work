@@ -1,12 +1,17 @@
-# DeepSeek Harness Brand Asset Usage Guidelines
+# DobeeWork Brand Guidelines
 
 English | [中文](BRAND_GUIDELINES.zh.md)
 
-To maintain the long\-term healthy development of the DeepSeek Harness ecosystem, avoid user confusion, and facilitate the retrieval and identification of related resources, we have established these specifications and hope that everyone will adhere to them:
+Current product names, interface text, model identity, packaging metadata, and maintained documentation use **DobeeWork**. The name does not imply endorsement by DeepSeek.
 
-- In your project's descriptive text, you may use "DeepSeek Harness" to truthfully and accurately describe your project's relationship with DeepSeek Harness, for example, "built on DeepSeek Harness" or "compatible with DeepSeek Harness\." Such descriptions comply with license requirements and help users understand your project's positioning\.
-- If you wish your project name to reflect its association with the DeepSeek Harness ecosystem, we recommend using the abbreviated "DSH" designation for naming, which is both clear and facilitates communication within the community\.
-- When naming your project, please avoid using the full "DeepSeek Harness" trademark directly\. "DeepSeek Harness" is a registered trademark of DeepSeek\. Unauthorized use in project names can easily lead to user misunderstanding and confusion, thereby affecting the clarity of the entire ecosystem\. It may also involve trademark infringement\.
-- Additionally, please avoid using official brand materials in your promotions or presentations in a way that could cause misunderstanding, so as not to give users the false impression of official endorsement, cooperation, or authorization\.
+DobeeWork derives from [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness). Preserve accurate upstream references, citations, copyright notices, and third-party licenses. These identify their original subjects and must not be relabeled as DobeeWork.
 
-We believe that a clear and orderly community environment will make every developer's efforts more visible and more readily recognized\. For the few cases that do not comply with the above specifications, we may contact the relevant parties to make appropriate adjustments in order to maintain the overall order of the ecosystem\. Thank you for your understanding and support—let us work together to build a more friendly and sustainable open\-source community\.
+Keep archived decision records, incident evidence, and committed historical Session generations unchanged. Refresh current expected output through its owning generator or recording workflow; do not rewrite historical inputs merely to remove an old product name.
+
+Package names, SDK imports, `dsh`, `DSH_HOME`, provider identifiers, protocols, and user data paths remain technical identifiers. Changing them requires a separate compatibility and migration decision. DeepSeek model and API names identify a provider, not the DobeeWork product.
+
+Use an independent `dobee` plugin for product-specific behavior or replacement brand components. Reviewed mechanical edits may change upstream wording, assets, and packaging metadata without changing behavior; do not copy entire upstream plugins.
+
+The upstream brand plugin and its original assets remain available for upstream-specific compositions, but DobeeWork profiles use their replacement. Do not present upstream official assets as DobeeWork branding.
+
+`pnpm run verify:dobee-branding` checks active text for the old display name. Its exact-file exceptions identify upstream material or historical evidence; each exception needs a reason and must not admit new product copy.

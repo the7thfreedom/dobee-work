@@ -1,6 +1,6 @@
 {
   "name": "@deepseek-ai/dsh-session-telemetry",
-  "description": "SessionTelemetryBackend seam for the DeepSeek Harness: session-event capture, projection, redaction, and handoff to a reporting backend",
+  "description": "SessionTelemetryBackend seam for the DobeeWork: session-event capture, projection, redaction, and handoff to a reporting backend",
   "version": "0.2.1-alpha.1",
   "publishConfig": {
     "access": "public"
