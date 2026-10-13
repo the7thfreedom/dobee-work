@@ -11,9 +11,9 @@ import type {} from '../src/client/mount.ts'
 
 afterEach(cleanup)
 
-function editor(patch: Partial<Draft> = {}): Draft {
+function editor(patch: Partial<Draft> = {}, saved = true): Draft {
   return {
-    id: 'deepseek', originalId: 'deepseek', source: 'deepseek', kind: 'api',
+    id: 'deepseek', ...(saved ? { originalId: 'deepseek' } : {}), source: 'deepseek', kind: 'api',
     enabled: true, enabledModels: null, displayName: '', baseURL: 'https://api.deepseek.com',
     apiKeyEnv: 'SHARED_KEY', apiKey: '', timeoutMs: '', models: [],
     revision: 3, configCommitted: false, dirty: false, ...patch,
@@ -105,14 +105,14 @@ describe('two-pane provider settings', () => {
   it.each([false, true])('omits the provider name input for presets, custom providers, and subscriptions (Chinese: %s)', (chinese) => {
     const f = fixture({}, chinese)
     const view = render(<Section {...f.props} />)
-    for (const patch of [
-      {},
-      { source: '', originalId: undefined },
-      { source: 'github-copilot', kind: 'subscription' as const },
+    for (const draft of [
+      editor(),
+      editor({ source: '' }, false),
+      editor({ source: 'github-copilot', kind: 'subscription' }),
     ]) {
-      f.state.draft = editor(patch)
+      f.state.draft = draft
       view.rerender(<Section {...f.props} />)
-      expect(screen.queryByRole('textbox', { name: chinese ? '名称' : 'Name', exact: true })).toBeNull()
+      expect(screen.queryByRole('textbox', { name: chinese ? '名称' : 'Name' })).toBeNull()
       expect(screen.queryByPlaceholderText(chinese ? '可选显示名称' : 'Optional display name')).toBeNull()
     }
     expect(f.props.edit).not.toHaveBeenCalled()
@@ -185,7 +185,7 @@ describe('two-pane provider settings', () => {
   })
 
   it('shows indicators on the unsaved custom provider row', () => {
-    const f = fixture({ draft: editor({ source: '', originalId: undefined, id: 'custom-draft' }), candidates: [] })
+    const f = fixture({ draft: editor({ source: '', id: 'custom-draft' }, false), candidates: [] })
     render(<Section {...f.props} />)
     const row = screen.getByRole('button', { name: /^Custom provider / })
     expect(row.getAttribute('aria-label')).toContain(en.notConfigured)
