@@ -16,3 +16,9 @@ it('keeps list scrollbars inset and respects reduced motion', () => {
   expect(css).toMatch(/\.models\s*\{[^}]*overflow: auto;[^}]*padding: 2px;/)
   expect(css).toContain('@media (prefers-reduced-motion: reduce)')
 })
+
+it('keeps one nonshrinking readiness dot beside wrapping provider names', () => {
+  expect(css).toMatch(/\.provider\s*\{[^}]*flex-wrap: nowrap;[^}]*gap: 8px;/)
+  expect(css).toMatch(/\.providerText\s*\{[^}]*flex: 1;[^}]*min-width: 0;/)
+  expect(css).toMatch(/\.providerStatus\s*\{[^}]*margin-left: auto;[^}]*flex-shrink: 0;/)
+})

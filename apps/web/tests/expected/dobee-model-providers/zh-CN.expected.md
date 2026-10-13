@@ -1,0 +1,21 @@
+- complementary "提供商":
+  - textbox "搜索提供商"
+  - group "提供商类型":
+    - button "全部" [pressed]
+    - button "API"
+    - button "订阅"
+  - button "DeepSeek — 已开启但未就绪：缺少 API Key" [pressed]: DeepSeek
+  - button "Work gateway — 已开启，可用": Work gateway
+  - button "硅基流动 — 已开启但未就绪：无法获取凭据状态": 硅基流动
+  - button "Anthropic Claude — 未配置": Anthropic Claude
+  - button "Google Gemini — 未配置": Google Gemini
+  - button "通义千问 — 未配置": 通义千问
+  - button "豆包 — 未配置": 豆包
+  - button "智谱 — 未配置": 智谱
+  - button "Kimi 中国 — 未配置": Kimi 中国
+  - button "Kimi 国际 — 未配置": Kimi 国际
+  - button "MiniMax 中国 — 未配置": MiniMax 中国
+  - button "MiniMax 国际 — 未配置": MiniMax 国际
+  - button "OpenRouter — 未配置": OpenRouter
+  - button "GitHub Copilot — 未配置": GitHub Copilot
+  - button "添加自定义提供商"

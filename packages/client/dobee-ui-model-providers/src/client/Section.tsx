@@ -1,12 +1,12 @@
 /** Searchable provider sidebar, API or subscription details, and shell-owned feedback. */
 import { useState } from 'react'
 import {
-  Button, Checkbox, Input, RiskConfirmation, Switch, Toast, IconLoadingOutlineRegular,
+  Button, Checkbox, Input, RiskConfirmation, StateDot, Switch, Toast, Tooltip, IconLoadingOutlineRegular,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { SnapshotStore } from '@deepseek-ai/dsh-client-store'
 import { PROTOCOLS, modelDraft, providerRoute } from './controller.ts'
-import { matchesPreset, protocolLabel, sourceLabel } from './presentation.ts'
+import { matchesPreset, protocolLabel, providerReadiness, sourceLabel } from './presentation.ts'
 import type { Controller, Draft, ModelDraft, State } from './controller.ts'
 import type { LocaleKey } from './locales.ts'
 import css from './Section.module.css'
@@ -33,6 +33,30 @@ export interface Face {
 
 type Localized = PropsLocale<'dobee.modelProviders'>
 type SectionProps = PropsRuntime<'settings.section'> & InjectFace<Face> & Localized
+
+function ProviderItem({ state, id, label, endpoint, selected, disabled, onClick, t }: {
+  state: State
+  id?: string | undefined
+  label: string
+  endpoint?: string | undefined
+  selected: boolean
+  disabled: boolean
+  onClick: () => void
+  t: Localized['t']
+}) {
+  const readiness = providerReadiness(state, id)
+  const status = t(readiness.label)
+  return <Tooltip label={status} portal>
+    <Button className={css.provider} variant={selected ? 'outline' : 'ghost'} aria-pressed={selected}
+      aria-label={t('providerItemLabel', { name: label, status })} disabled={disabled} onClick={onClick}>
+      <span className={css.providerText}>
+        <span className={css.providerName}>{label}</span>
+        {endpoint !== undefined && <span className={css.badge}>{endpoint}</span>}
+      </span>
+      <StateDot className={css.providerStatus} state={readiness.state} />
+    </Button>
+  </Tooltip>
+}
 
 function ModelFields({ model, onChange, t, disabled }: {
   model: ModelDraft
@@ -145,22 +169,16 @@ export function Section(props: SectionProps) {
         </div>
         <div className={css.providerList}>
           {draft?.originalId === undefined && draft?.source === '' && filter !== 'subscription' &&
-            <Button className={css.provider} variant="outline" aria-pressed={true} disabled={!canSelect}
-              onClick={() => { props.open() }}>{draft.displayName || t('custom')}</Button>}
-          {visibleSaved.map(([id, connection]) => <Button key={id} className={css.provider}
-            variant={draft?.id === id ? 'outline' : 'ghost'} aria-pressed={draft?.id === id}
-            disabled={!canSelect} onClick={() => { props.open(id) }}>
-            <span className={css.providerName}>{connection.displayName || sourceLabel(connection.source, t) || t('custom')}</span>
-            {!connection.displayName && sourceLabel(connection.source, t) === undefined &&
-              connection.baseURL !== undefined && <span className={css.badge}>{connection.baseURL}</span>}
-            {connection.enabled === false && <span className={css.badge}>{t('disabled')}</span>}
-          </Button>)}
-          {visiblePresets.map(preset => <Button key={preset.source} className={css.provider}
-            variant={draft?.originalId === undefined && draft?.source === preset.source ? 'outline' : 'ghost'}
-            aria-pressed={draft?.originalId === undefined && draft?.source === preset.source}
-            disabled={!canSelect} onClick={() => { props.open(undefined, preset.source) }}>
-            <span className={css.providerName}>{sourceLabel(preset.source, t) || preset.source}</span>
-          </Button>)}
+            <ProviderItem state={state} id={draft.id} label={draft.displayName || t('custom')}
+              selected={true} disabled={!canSelect} onClick={() => { props.open() }} t={t} />}
+          {visibleSaved.map(([id, connection]) => <ProviderItem key={id} state={state} id={id}
+            label={connection.displayName || sourceLabel(connection.source, t) || t('custom')}
+            endpoint={!connection.displayName && sourceLabel(connection.source, t) === undefined ? connection.baseURL : undefined}
+            selected={draft?.id === id} disabled={!canSelect} onClick={() => { props.open(id) }} t={t} />)}
+          {visiblePresets.map(preset => <ProviderItem key={preset.source} state={state}
+            id={draft?.source === preset.source ? draft.id : undefined} label={sourceLabel(preset.source, t) || preset.source}
+            selected={draft?.originalId === undefined && draft?.source === preset.source}
+            disabled={!canSelect} onClick={() => { props.open(undefined, preset.source) }} t={t} />)}
           {visibleSaved.length + visiblePresets.length === 0 && <p className={css.hint}>{t('noProviders')}</p>}
         </div>
         <Button variant="outline" disabled={!canSelect || !state.writable}
@@ -179,11 +197,6 @@ export function Section(props: SectionProps) {
               onChange={(enabled) => { props.edit({ enabled }) }} />
           </div>
           <div className={css.actions}><span className={css.badge}>{t(draft.kind)}</span></div>
-          <label className={css.field}>
-            <span>{t('name')}</span>
-            <Input value={draft.displayName} disabled={locked} placeholder={t('optionalName')}
-              onChange={(event) => { props.edit({ displayName: event.currentTarget.value }) }} />
-          </label>
           {draft.kind === 'api' ? <>
             <label className={css.field}>
               <span>{t('baseURL')}</span>

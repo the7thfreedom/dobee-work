@@ -6,6 +6,7 @@ import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import { Section, OutcomeToast } from '../src/client/Section.tsx'
 import { en, zh } from '../src/client/locales.ts'
 import type { Draft, State } from '../src/client/controller.ts'
+import { connectionOf, connectionTarget } from '../src/client/controller.ts'
 import type {} from '../src/client/mount.ts'
 
 afterEach(cleanup)
@@ -31,11 +32,15 @@ function fixture(patch: Partial<State> = {}, chinese = false) {
       { source: 'google', kind: 'api', baseURL: 'https://generativelanguage.googleapis.com' },
       { source: 'github-copilot', kind: 'subscription' },
     ], defaultWritable: true, draft: editor(), credentialLoading: false, credential: { configured: true, writable: true },
-    candidates: [{ id: 'model-a', name: 'Model A' }, { id: 'model-b' }], catalogLoading: false,
+    candidates: [{ id: 'model-a', name: 'Model A' }, { id: 'model-b' }], checks: {}, catalogLoading: false,
     loggingIn: false, busy: false, error: null, toast: null, ...patch,
   }
   const dictionary: Record<string, string> = chinese ? zh : en
-  const t: TranslateNS<'dobee.modelProviders'> = key => dictionary[key] ?? key
+  const t: TranslateNS<'dobee.modelProviders'> = (key, params) => {
+    let text = dictionary[key] ?? key
+    for (const [name, value] of Object.entries(params ?? {})) text = text.replaceAll(`{${name}}`, String(value))
+    return text
+  }
   const props = {
     t, useConnections: (selector: (value: State) => unknown) => selector(state),
     open: vi.fn(), edit: vi.fn(), cancel: vi.fn(), save: vi.fn(async () => true),
@@ -68,11 +73,11 @@ describe('two-pane provider settings', () => {
     render(<Section {...f.props} />)
     fireEvent.change(screen.getByRole('textbox', { name: en.search }), { target: { value: 'Gemini' } })
     const sidebar = screen.getByRole('complementary', { name: en.providers })
-    expect(within(sidebar).queryByRole('button', { name: 'DeepSeek' })).toBeNull()
-    fireEvent.click(within(sidebar).getByRole('button', { name: 'Google Gemini' }))
+    expect(within(sidebar).queryByRole('button', { name: /^DeepSeek / })).toBeNull()
+    fireEvent.click(within(sidebar).getByRole('button', { name: /^Google Gemini / }))
     expect(f.props.open).toHaveBeenCalledWith(undefined, 'google')
     fireEvent.change(screen.getByRole('textbox', { name: en.search }), { target: { value: 'work' } })
-    fireEvent.click(within(sidebar).getByRole('button', { name: 'Work gateway' }))
+    fireEvent.click(within(sidebar).getByRole('button', { name: /^Work gateway / }))
     expect(f.props.open).toHaveBeenCalledWith('work')
   })
 
@@ -81,22 +86,110 @@ describe('two-pane provider settings', () => {
     render(<Section {...f.props} />)
     const sidebar = screen.getByRole('complementary', { name: en.providers })
     fireEvent.click(within(sidebar).getByRole('button', { name: en.subscription }))
-    expect(within(sidebar).queryByRole('button', { name: 'DeepSeek' })).toBeNull()
-    fireEvent.click(within(sidebar).getByRole('button', { name: 'GitHub Copilot' }))
+    expect(within(sidebar).queryByRole('button', { name: /^DeepSeek / })).toBeNull()
+    fireEvent.click(within(sidebar).getByRole('button', { name: /^GitHub Copilot / }))
     expect(f.props.open).toHaveBeenCalledWith(undefined, 'github-copilot')
     expect(within(sidebar).queryByText('Claude Code')).toBeNull()
     expect(within(sidebar).queryByText('Codex')).toBeNull()
   })
 
-  it('adds a custom provider without an ID form and stages enabled/name changes', () => {
+  it('adds a custom provider without an ID form and stages enabled changes', () => {
     const f = fixture()
     render(<Section {...f.props} />)
     fireEvent.click(screen.getByRole('button', { name: en.addCustom }))
     expect(f.props.open).toHaveBeenCalledWith()
     fireEvent.click(screen.getByRole('switch', { name: en.enabled }))
     expect(f.props.edit).toHaveBeenCalledWith({ enabled: false })
-    fireEvent.change(screen.getByRole('textbox', { name: en.name }), { target: { value: 'Personal' } })
-    expect(f.props.edit).toHaveBeenCalledWith({ displayName: 'Personal' })
+  })
+
+  it.each([false, true])('omits the provider name input for presets, custom providers, and subscriptions (Chinese: %s)', (chinese) => {
+    const f = fixture({}, chinese)
+    const view = render(<Section {...f.props} />)
+    for (const patch of [
+      {},
+      { source: '', originalId: undefined },
+      { source: 'github-copilot', kind: 'subscription' as const },
+    ]) {
+      f.state.draft = editor(patch)
+      view.rerender(<Section {...f.props} />)
+      expect(screen.queryByRole('textbox', { name: chinese ? '名称' : 'Name', exact: true })).toBeNull()
+      expect(screen.queryByPlaceholderText(chinese ? '可选显示名称' : 'Optional display name')).toBeNull()
+    }
+    expect(f.props.edit).not.toHaveBeenCalled()
+  })
+
+  it('displays an existing provider name without offering a name input', () => {
+    const f = fixture({ draft: editor({ displayName: 'Work gateway' }) })
+    render(<Section {...f.props} />)
+    expect(screen.getByRole('heading', { name: 'Work gateway' })).toBeDefined()
+    expect(screen.queryByDisplayValue('Work gateway')).toBeNull()
+  })
+
+  it.each([false, true])('shows one red or grey readiness dot without model counts (Chinese: %s)', (chinese) => {
+    const f = fixture({ connections: {
+      deepseek: { source: 'deepseek' },
+      work: { source: 'openai', displayName: 'Work gateway', enabled: false, models: [{ id: 'work-model' }] },
+    }, credential: { configured: false, writable: true } }, chinese)
+    render(<Section {...f.props} />)
+    const copy = chinese ? zh : en
+    const sidebar = screen.getByRole('complementary', { name: copy.providers })
+    const deepseek = within(sidebar).getByRole('button', { name: /^DeepSeek / })
+    const work = within(sidebar).getByRole('button', { name: /^Work gateway / })
+    const google = within(sidebar).getByRole('button', { name: /^Google Gemini / })
+    expect(deepseek.getAttribute('aria-label')).toContain(copy.providerMissingKey)
+    expect(deepseek.textContent).toBe('DeepSeek')
+    expect(deepseek.querySelectorAll('[data-state]')).toHaveLength(1)
+    expect(deepseek.querySelectorAll('[data-state="error"]')).toHaveLength(1)
+    expect(work.getAttribute('aria-label')).toContain(copy.disabled)
+    expect(work.querySelectorAll('[data-state="idle"]')).toHaveLength(1)
+    expect(google.getAttribute('aria-label')).toContain(copy.notConfigured)
+    expect(google.querySelectorAll('[data-state="idle"]')).toHaveLength(1)
+  })
+
+  it('does not turn green from a configured key and an offline model catalog', () => {
+    const f = fixture()
+    render(<Section {...f.props} />)
+    const row = screen.getByRole('button', { name: /^DeepSeek / })
+    expect(row.getAttribute('aria-label')).toContain(en.providerUnverified)
+    expect(row.querySelector('[data-state="error"]')).not.toBeNull()
+  })
+
+  it('shows green only after live verification and saved changes, and grey when disabled', () => {
+    const f = fixture()
+    f.state.checks.deepseek = {
+      target: connectionTarget('deepseek', connectionOf(editor()), f.state.presets),
+      verifiedModels: ['model-a'], credential: { configured: true, writable: true },
+    }
+    const view = render(<Section {...f.props} />)
+    const row = () => screen.getByRole('button', { name: /^DeepSeek / })
+    expect(row().getAttribute('aria-label')).toContain(en.providerReady)
+    expect(row().querySelectorAll('[data-state="done"]')).toHaveLength(1)
+    f.state.draft = editor({ dirty: true })
+    view.rerender(<Section {...f.props} />)
+    expect(row().getAttribute('aria-label')).toContain(en.providerUnsaved)
+    expect(row().querySelector('[data-state="error"]')).not.toBeNull()
+    f.state.draft = editor({ enabled: false })
+    view.rerender(<Section {...f.props} />)
+    expect(row().getAttribute('aria-label')).toContain(en.disabled)
+    expect(row().querySelector('[data-state="idle"]')).not.toBeNull()
+  })
+
+  it('keeps a verified provider green after selecting a different provider', () => {
+    const f = fixture()
+    f.state.checks.work = {
+      target: connectionTarget('work', f.state.connections.work!, f.state.presets),
+      verifiedModels: ['work-model'], credential: { configured: true, writable: true },
+    }
+    render(<Section {...f.props} />)
+    expect(screen.getByRole('button', { name: /^Work gateway / }).querySelector('[data-state="done"]')).not.toBeNull()
+  })
+
+  it('shows indicators on the unsaved custom provider row', () => {
+    const f = fixture({ draft: editor({ source: '', originalId: undefined, id: 'custom-draft' }), candidates: [] })
+    render(<Section {...f.props} />)
+    const row = screen.getByRole('button', { name: /^Custom provider / })
+    expect(row.getAttribute('aria-label')).toContain(en.notConfigured)
+    expect(row.querySelectorAll('[data-state="idle"]')).toHaveLength(1)
   })
 
   it('shows synced models directly with checkboxes and default actions, never an editable default ID', () => {

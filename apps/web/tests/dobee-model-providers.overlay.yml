@@ -1,0 +1,17 @@
+- id: dobee-model-providers
+  config:
+    connections:
+      deepseek:
+        source: deepseek
+        models:
+          - id: deepseek-chat
+          - id: deepseek-reasoner
+      work:
+        source: openai
+        displayName: Work gateway
+        enabled: false
+        models:
+          - id: work-model
+      empty:
+        source: siliconflow
+        models: []

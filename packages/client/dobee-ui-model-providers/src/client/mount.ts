@@ -87,7 +87,7 @@ function registerUi(ctx: Context): void {
     dismiss: () => { controller.dismiss() },
   })
   ctx.effect(() => () => controller.dispose())
-  ctx.effect(() => ctx.remote.$on('credentials/reference-updated', () => { void controller.refreshCredential() }))
+  ctx.effect(() => ctx.remote.$on('credentials/reference-updated', (ref) => { controller.credentialChanged(ref) }))
   ctx.effect(() => ctx.configForms.whileServed([NAMESPACE], () => ctx.slots.inject('settings.section', () =>
     ctx.slots.register({
       name: 'settings.section', id: 'models', order: 10, label: () => t('title'), locale, inject: face,

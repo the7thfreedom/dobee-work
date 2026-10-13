@@ -1,6 +1,7 @@
 /** Localized brands and searchable aliases keyed by unchanged Host source IDs. */
 import type { LocaleKey } from './locales.ts'
-import type { PROTOCOLS } from './controller.ts'
+import { connectionOf, connectionTarget } from './controller.ts'
+import type { PROTOCOLS, State } from './controller.ts'
 
 const presets: Record<string, { label: LocaleKey; aliases: LocaleKey }> = {
   openai: { label: 'presetLabel.openai', aliases: 'presetAliases.openai' },
@@ -57,4 +58,48 @@ export function matchesPreset(source: string, query: string, t: (key: LocaleKey)
  */
 export function protocolLabel(protocol: typeof PROTOCOLS[number], t: (key: LocaleKey) => string): string {
   return t(protocols[protocol])
+}
+
+/**
+ * Project saved access and live model-interface verification into one readiness mark.
+ * @param state - current editor and retained provider checks.
+ * @param id - saved or staged provider ID; absent for an unopened preset.
+ * @returns green for verified readiness, red for enabled but not ready, or grey for disabled/unconfigured.
+ */
+export function providerReadiness(state: State, id: string | undefined): {
+  state: 'done' | 'error' | 'idle'
+  label: LocaleKey
+} {
+  const draft = state.draft?.id === id ? state.draft : null
+  const saved = id === undefined ? undefined : state.connections[id]
+  if (id === undefined || (saved === undefined && draft?.originalId === undefined)) {
+    return { state: 'idle', label: 'notConfigured' }
+  }
+  const connection = draft === null ? saved : connectionOf(draft)
+  if (connection === undefined) return { state: 'idle', label: 'notConfigured' }
+  if (connection.enabled === false) return { state: 'idle', label: 'disabled' }
+  if (draft?.dirty || draft?.configCommitted) return { state: 'error', label: 'providerUnsaved' }
+  const check = state.checks[id]
+  const matched = check?.target === connectionTarget(id, connection, state.presets)
+  const subscription = connection.source === 'github-copilot' || connection.kind === 'subscription'
+  if (subscription) {
+    const account = draft === null ? check?.subscription : state.subscription ?? check?.subscription
+    if (account?.status === 'signed-out') return { state: 'error', label: 'providerSignInRequired' }
+    if (account?.status === 'expired') return { state: 'error', label: 'providerAccessExpired' }
+    if (account?.status !== 'signed-in') return { state: 'error', label: 'providerUnverified' }
+  } else {
+    const credential = draft === null ? check?.credential : state.credential ?? check?.credential
+    if (credential?.configured === false) return { state: 'error', label: 'providerMissingKey' }
+    if (credential?.configured !== true) {
+      return { state: 'error', label: state.credentialLoading && draft !== null ? 'providerChecking' : 'providerCredentialUnknown' }
+    }
+  }
+  if (!matched) return { state: 'error', label: 'providerUnverified' }
+  if (check.failure !== undefined) return { state: 'error', label: 'providerVerificationFailed' }
+  if (check.verifiedModels === undefined) return { state: 'error', label: 'providerUnverified' }
+  const configured = connection.models
+  const available = check.verifiedModels.some(model =>
+    (configured === undefined || configured.length === 0 || configured.some(item => item.id === model))
+    && (connection.enabledModels === undefined || connection.enabledModels === null || connection.enabledModels.includes(model)))
+  return { state: available ? 'done' : 'error', label: available ? 'providerReady' : 'providerNoModels' }
 }
