@@ -118,7 +118,7 @@ If a required `gh`, `pnpm`, build, test, or generator command fails because the 
 
 ### Run relevant checks locally
 
-Before pushing, follow [dsh-pre-push-checks](.agents/skills/dsh-pre-push-checks/SKILL.md); report only commands run. After `gh stack sync`, validate immediately; do not merge before checks pass.
+Validate during implementation with [dsh-pre-push-checks](.agents/skills/dsh-pre-push-checks/SKILL.md). PR requests only publish: commit, push, create from the template with existing evidence; do not launch checks or wait for CI. Report unrun checks; retain integrity hooks. After `gh stack sync`, validate immediately; merge only after checks pass.
 
 - Match evidence to the surface: focused behavior tests, model/user-output snapshots, `doc-sync` for docs, built smokes for published paths, and real-API e2e for providers.
 - Never default to the full suite or repeat a passing check for commit or push. CI owns exhaustive coverage and the platform matrix; rehearse all locally only by explicit request, for CI diagnosis, or for an irreducibly repository-wide change.

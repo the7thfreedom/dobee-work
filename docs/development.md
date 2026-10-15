@@ -140,13 +140,13 @@ lefthook is configured in `lefthook.yml` as a fast local checkpoint:
 
 - `pre-commit` verifies staged pairing records against the staged owner blobs, validates staged files with the project-free `.oxlintrc.staged.json` profile and applies Oxlint fixes with one bounded retry, regenerates `THIRD_PARTY_NOTICES.md` when a staged file is one of its inputs, checks the staged diff for whitespace errors, and runs the vendor manifest guard.
 - `pre-merge-commit` runs only the [dobee upstream customization guard](cookbook/syncing-dobee-upstream.md#customization-protection). Upstream translation-pairing and archived-note checks do not intercept automatic merge commits; manual `git commit` still runs the normal `pre-commit` checks.
-- `pre-push` runs `pnpm run typecheck`, which completes the Host lib phase, including generated Typert contracts, before the Client TypeScript check.
+- Pushes run no local typecheck or build; contributors validate during implementation, and CI retains its configured checks.
 
 The vendor manifest guard checks that changes under `vendor/*/src` are staged with the matching `vendor/README.md` manifest update. See `vendor/README.md` before editing vendored code.
 
 Apart from the scoped staged-record verification, the hooks intentionally do not run tests, snapshots, documentation checks, builds, or hygiene. Contributors run the [checks relevant to the changed behavior](../AGENTS.md#run-relevant-checks-locally) once; CI owns exhaustive coverage, built-artifact smokes, and the Node 22.19, 24, and 26 compatibility matrix.
 
-Contributors can opt into the comprehensive local gate set with `pnpm run check:all`. The command is independent of the Git hooks and is not an agent instruction.
+A request to create a PR publishes the current change without launching tests, builds, lint, documentation checks, or CI waits. Use existing evidence in the repository template and state which checks were not run. Contributors can opt into the comprehensive local gate set with `pnpm run check:all`; it is independent of Git hooks.
 
 ### CI gates
 

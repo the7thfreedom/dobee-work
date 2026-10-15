@@ -44,8 +44,3 @@ pre-merge-commit:
   jobs:
     - name: dobee upstream customization guard
       run: node scripts/dobee-customizations.ts --merge --cached
-
-pre-push:
-  jobs:
-    - name: typecheck
-      run: pnpm run typecheck
