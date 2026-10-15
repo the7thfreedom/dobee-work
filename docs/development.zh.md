@@ -144,13 +144,13 @@ lefthook 在 `lefthook.yml` 中配置，作为快速的本地检查点：
 
 - `pre-commit` 对照暂存的配对文档 blob 校验暂存的配对记录，使用不加载项目的 `.oxlintrc.staged.json` 配置验证暂存文件，并通过一次有界重试应用 Oxlint 修复，在暂存文件属于 `THIRD_PARTY_NOTICES.md` 的输入时重新生成该文件，然后检查暂存 diff 中的空白错误，并运行 vendor manifest（元数据清单）守卫；
 - `pre-merge-commit` 仅运行 [dobee 上游定制保护检查](cookbook/syncing-dobee-upstream.zh.md#customization-protection)。上游的翻译配对和归档备注检查不拦截自动合并提交；手动 `git commit` 仍执行正常的 `pre-commit` 检查；
-- `pre-push` 运行 `pnpm run typecheck`；该命令会先完成包含 Typert 约定生成的完整 Host lib 阶段，再运行 Client TypeScript 检查。
+- 推送不运行本地类型检查或构建；贡献者在开发阶段验证，CI 保留已配置的检查。
 
 vendor manifest 守卫检查 `vendor/*/src` 下的改动是否连同对应的 `vendor/README.md` manifest 更新一起暂存。请在编辑 vendor 代码前先阅读 `vendor/README.md`。
 
 除限定范围的暂存记录校验外，这些钩子有意不运行测试、快照、文档检查、构建或 `hygiene`。贡献者只运行一次[与改动行为相关的检查](../AGENTS.md#run-relevant-checks-locally)；CI 负责全量覆盖率门禁、构建产物冒烟测试，以及 Node 22.19、24 和 26 兼容性矩阵。
 
-贡献者可以选择运行 `pnpm run check:all`，执行全面的本地门禁集。该命令独立于 Git 钩子，也不是对 agent 的指令。
+创建 PR 的请求只发布当前改动，不启动测试、构建、lint、文档检查或等待 CI。在仓库模板中使用已有证据，并说明哪些检查未运行。贡献者可主动运行 `pnpm run check:all` 执行完整本地检查；该命令独立于 Git hooks。
 
 ### CI 门禁
 

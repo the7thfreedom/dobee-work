@@ -1,11 +1,15 @@
 ---
 name: dsh-pre-push-checks
-description: Use before pushing, force-pushing, marking ready for review, or claiming checks pass on a deepseek-harness branch, and immediately after gh stack sync publishes rewritten branches, to select the smallest tests and checks that cover the outgoing or just-published diff without reflexively running the full repository suite.
+description: Select focused validation during implementation or before claiming checks pass, and immediately after gh stack sync rewrites published branches. PR creation alone uses existing evidence and does not trigger validation.
 ---
 
 # DSH Pre-Push Checks
 
-Use this skill to run relevant local evidence once before a `deepseek-harness` push. The sole ordering exception is `gh stack sync`, which may publish a cascading rebase before the rewritten layers can be validated; validate them immediately afterward and do not merge until the evidence passes. Git hooks are intentionally narrow: pre-commit fixes staged lint, checks staged whitespace, and guards vendored-source metadata; pre-push runs only the incremental repository typecheck. CI owns exhaustive coverage and the platform matrix.
+Use this skill to select relevant evidence during implementation, not as a publication checklist. Git hooks retain staged integrity checks; no pre-push typecheck runs. CI owns exhaustive coverage and the platform matrix.
+
+## PR creation only
+
+When the user asks only to create a PR, do not run tests, builds, typecheck, lint, doc-sync, or a fresh validation audit. Inspect the branch state and repository template, commit outstanding intended changes if needed, push normally, and create the PR promptly. Use existing evidence in the template and mark missing checks as not run. Do not wait for CI or expand into repairs or unrelated cleanup; report any publication blocker. Keep integrity hooks and force-with-lease protection enabled. Stop here; the sections below apply to implementation and validation work.
 
 ## Inspect the outgoing change
 
@@ -39,7 +43,7 @@ When the outgoing change adds or changes a resource-owning or asynchronous test,
 - **Package manifests, public exports, build configuration, worker/bin entries, or built runtime paths:** run `pnpm run build`, the relevant hygiene checks, and the owning built-artifact smoke.
 - **Real provider or agent behavior:** run the relevant `pnpm run test:e2e` target when credentials are available; never print secrets.
 
-Do not manually repeat a passing check merely because commit or push follows. In particular, do not run typecheck immediately before pushing solely to duplicate the pre-push hook.
+Do not run or repeat a check merely because commit, push, or PR creation follows.
 
 Pass Vitest file and name filters directly after the script name with `pnpm run`; do not insert a standalone `--`, which reaches Vitest and can disable `-t` filtering. For example, this command runs one headless snapshot scenario:
 
@@ -95,7 +99,7 @@ If post-sync evidence fails, leave the lease-protected published heads in place,
 
 ## Handle failures
 
-If a relevant check fails before an ordinary push, stop and fix or explain the blocker. Do not push and hope CI differs. For the post-sync exception, block the merge and follow the repair procedure above.
+During implementation, fix or explain a failing relevant check. A publication-only request does not authorize a repair pass: report known failures accurately in the PR instead of claiming checks pass. For post-sync validation, block the merge and follow the repair procedure above.
 
 If a failure looks environment-specific, prove it:
 
@@ -108,16 +112,16 @@ If a failure looks environment-specific, prove it:
 
 For ordinary and standalone rebase pushes:
 
-1. Run the selected relevant checks once.
+1. Use evidence already collected during implementation; do not launch checks for publication.
 2. Commit normally and inspect any files changed by the pre-commit fixer before continuing.
-3. Push normally, or use the exact lease for an authorized rewritten branch, so the incremental typecheck hook runs.
+3. Push normally, or use the exact lease for an authorized rewritten branch.
 4. Verify the remote ref matches local `HEAD`.
 
 ```sh
 git rev-parse HEAD origin/$(git branch --show-current)
 ```
 
-For GitHub PRs, inspect remote CI after the push:
+When the user requests CI status or validation, inspect remote CI:
 
 ```sh
 gh pr checks

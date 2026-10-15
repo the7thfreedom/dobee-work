@@ -50,6 +50,13 @@ function cli(root: string, args: string[], reviewed?: string): ReturnType<typeof
 }
 
 describe('dobee customization synchronization guard', () => {
+  it('publishes without a pre-push build or typecheck while retaining integrity hooks', () => {
+    const configuration: unknown = load(readFileSync(resolve(import.meta.dirname, '..', 'lefthook.yml'), 'utf8'))
+    expect(configuration).not.toHaveProperty('pre-push')
+    expect(configuration).toHaveProperty('pre-commit.jobs.0.run', 'node scripts/dobee-customizations.ts --merge --cached')
+    expect(configuration).toHaveProperty('pre-merge-commit.jobs.0.run', 'node scripts/dobee-customizations.ts --merge --cached')
+  })
+
   it('keeps only the dobee guard in automatic merge checks without changing ordinary commit checks', () => {
     const configuration: unknown = load(readFileSync(resolve(import.meta.dirname, '..', 'lefthook.yml'), 'utf8'))
     expect(configuration).toMatchObject({
