@@ -1,0 +1,21 @@
+- complementary "Providers":
+  - textbox "Search providers"
+  - group "Provider type":
+    - button "All" [pressed]
+    - button "API"
+    - button "Subscription"
+  - 'button "DeepSeek — Enabled, not ready: API key missing" [pressed]': DeepSeek
+  - button "Work gateway — Enabled and ready": Work gateway
+  - 'button "SiliconFlow — Enabled, not ready: credential status unavailable"': SiliconFlow
+  - button "Anthropic Claude — Not configured": Anthropic Claude
+  - button "Google Gemini — Not configured": Google Gemini
+  - button "Qwen — Not configured": Qwen
+  - button "Doubao — Not configured": Doubao
+  - button "Zhipu — Not configured": Zhipu
+  - button "Kimi China — Not configured": Kimi China
+  - button "Kimi International — Not configured": Kimi International
+  - button "MiniMax China — Not configured": MiniMax China
+  - button "MiniMax International — Not configured": MiniMax International
+  - button "OpenRouter — Not configured": OpenRouter
+  - button "GitHub Copilot — Not configured": GitHub Copilot
+  - button "Add custom provider"

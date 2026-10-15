@@ -31,6 +31,10 @@ The Settings section appears while the Host serves `dobee-model-providers`; the 
 
 Select a saved provider or a preset in the left sidebar. **API** and **Subscription** filters narrow the list. API presets prefill their Endpoint; enter an API Key or keep a configured credential, then save. **Add custom provider** creates an API provider using OpenAI Chat Completions; protocol, timeout, and manual model capacities are in **Advanced settings**. Provider IDs are generated automatically, and existing IDs remain unchanged.
 
+Each sidebar item has one readiness dot: green for an enabled, saved connection with credentials and at least one enabled model verified through its live model-list interface; red for an enabled connection that is not ready or not verified; grey for a disabled or unconfigured provider. Hover or focus the item to read the reason. Built-in catalogs and credential presence alone do not establish readiness. **Sync models** verifies the model-list interface; save pending changes before the provider can turn green.
+
+Verification remains available when switching providers in the current Client runtime, but does not survive a restart. Endpoint changes, API-key changes, sign-out, and account changes invalidate the relevant verification. Opening settings does not send external verification or inference requests. Green reports the last successful model-list check, not an inference test or continuous monitoring.
+
 The API Key input never displays a stored secret. Leaving it empty keeps an existing configured credential; the status reports presence only. GitHub Copilot instead offers **Sign in with GitHub** without Endpoint, API Key, or token fields. Sign-in saves the provider first, then shows a browser authorization link and device code. **Cancel sign-in** stops polling; a completed sign-in refreshes account status and syncs models. Saved account status is restored when the provider is selected again.
 
 ### Models and default selection

@@ -43,12 +43,26 @@
   min-height: 36px;
   white-space: normal;
   text-align: left;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+
+.providerText {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  gap: 4px;
 }
 
 .providerName {
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+.providerStatus {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .detail {

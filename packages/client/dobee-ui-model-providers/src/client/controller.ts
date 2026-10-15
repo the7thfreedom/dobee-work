@@ -77,6 +77,15 @@ export interface Operations {
   cancelLogin: (connectionId: string) => Promise<void>
   logout: (connectionId: string) => Promise<void>
 }
+/** Credential presence and live model-interface evidence; no secret values are retained. */
+export interface ProviderCheck {
+  target: string
+  credentialRef?: string | undefined
+  credential?: CredentialInfo | undefined
+  subscription?: SubscriptionStatus | undefined
+  verifiedModels?: string[] | undefined
+  failure?: 'catalogFailed' | 'syncFailed' | undefined
+}
 /** Framework-observed provider page state. */
 export interface State {
   status: 'loading' | 'ready' | 'unavailable'
@@ -89,6 +98,8 @@ export interface State {
   credential?: CredentialInfo | undefined
   credentialLoading: boolean
   candidates: Model[]
+  /** Readiness evidence retained across selection, not across application restarts. */
+  checks: Record<string, ProviderCheck>
   catalogLoading: boolean
   subscription?: SubscriptionStatus | undefined
   deviceCode?: Extract<SubscriptionLoginFrame, { type: 'device-code' }> | undefined
@@ -113,6 +124,24 @@ export function keyReference(id: string): string {
  * @returns provider route.
  */
 export function providerRoute(id: string): string { return `dobee-${id}` }
+
+/**
+ * Identify the effective endpoint and credential reference used for connection verification.
+ * @param id - connection ID.
+ * @param connection - saved or staged secret-free settings.
+ * @param presets - loaded provider defaults.
+ * @returns stable identity excluding secrets, enable switches, and model selection.
+ */
+export function connectionTarget(id: string, connection: Connection, presets: readonly ProviderPreset[]): string {
+  const preset = presets.find(item => item.source === connection.source)
+  const kind = connection.source === 'github-copilot' ? 'subscription' : connection.kind ?? preset?.kind ?? 'api'
+  return JSON.stringify([
+    connection.source ?? '', kind,
+    connection.api ?? preset?.api ?? (connection.source === undefined ? 'openai-completions' : null),
+    connection.baseURL ?? preset?.baseURL ?? '',
+    kind === 'subscription' ? '' : connection.apiKeyEnv || keyReference(id),
+  ])
+}
 
 function positiveInteger(text: string): boolean {
   return /^\d+$/.test(text) && Number.isSafeInteger(Number(text)) && Number(text) > 0
@@ -144,7 +173,7 @@ export function validateDraft(draft: Draft): LocaleKey | undefined {
 }
 
 /**
- * Project model metadata into manual capacity fields.
+ * Project model metadata into manual fields; an empty input list inherits Host capabilities.
  * @param model - provider-disclosed or declared metadata.
  * @returns editable fields preserving omitted capabilities and protocol.
  */
@@ -153,7 +182,7 @@ export function modelDraft(model: Model): ModelDraft {
     id: model.id, name: model.name ?? '', contextWindow: model.contextWindow?.toString() ?? '',
     maxTokens: model.maxTokens?.toString() ?? '',
     ...(model.api === undefined ? {} : { api: model.api }),
-    ...(model.input === undefined ? {} : { input: [...model.input] }),
+    ...(model.input === undefined || model.input.length === 0 ? {} : { input: [...model.input] }),
     ...(model.reasoning === undefined ? {} : { reasoning: model.reasoning }),
   }
 }
@@ -194,7 +223,7 @@ export class Controller {
   /** Observable bound by the slot renderer. */
   readonly store = createSnapshotStore<State>({
     status: 'loading', writable: false, connections: {}, presets: [], defaultWritable: false,
-    draft: null, credentialLoading: false, candidates: [], catalogLoading: false,
+    draft: null, credentialLoading: false, candidates: [], checks: {}, catalogLoading: false,
     loggingIn: false, busy: false, error: null, toast: null,
   })
   private readonly unsubscribe: Array<() => void>
@@ -206,6 +235,7 @@ export class Controller {
   private catalogRead = 0
   private statusRead = 0
   private modelEdits = 0
+  private verificationEpoch = 0
   private sequence = 0
   private presetsReady = false
   private request: AbortController | undefined
@@ -240,14 +270,38 @@ export class Controller {
     if (this.disposed) return
     const snapshot = this.form.getSnapshot()
     const defaults = this.defaults.getSnapshot()
+    const before = this.store.getSnapshot()
+    const previous = before.connections
+    const connections = snapshot.value?.connections ?? {}
+    const draft = before.draft
+    const refreshDraft = draft?.originalId !== undefined && !draft.dirty && !draft.configCommitted
+      && !before.busy && !before.loggingIn && previous[draft.id] !== connections[draft.id]
     this.store.update((state) => {
       state.status = snapshot.status
       state.writable = snapshot.writable
-      state.connections = snapshot.value?.connections ?? {}
+      state.checks = Object.fromEntries(Object.entries(state.checks)
+        .filter(([id, check]) => previous[id] === connections[id]
+          || (connections[id] !== undefined && check.target === connectionTarget(id, connections[id], state.presets))))
+      state.connections = connections
       state.defaultModel = defaults.value
       state.defaultWritable = defaults.status === 'ready' && defaults.writable
+      if (state.draft !== null && !state.draft.dirty && !state.draft.configCommitted
+        && previous[state.draft.id] === connections[state.draft.id]) state.draft.revision = snapshot.revision
     })
+    if (refreshDraft) this.cancel()
     if (this.presetsReady && snapshot.status === 'ready' && this.store.getSnapshot().draft === null) this.openInitial()
+  }
+
+  private checkOf(draft: Draft): ProviderCheck {
+    const state = this.store.getSnapshot()
+    const target = connectionTarget(draft.id, connectionOf(draft), state.presets)
+    const check = state.checks[draft.id]
+    return check?.target === target ? check : {
+      target,
+      credentialRef: draft.kind === 'api' ? draft.apiKeyEnv || keyReference(draft.id) : undefined,
+      credential: state.credential,
+      subscription: state.subscription,
+    }
   }
 
   /** Reload the provider list after a catalog-service failure. */
@@ -325,14 +379,23 @@ export class Controller {
   private async loadCatalog(id: string, selection: number): Promise<void> {
     const read = ++this.catalogRead
     const modelEdits = this.modelEdits
+    const connection = this.store.getSnapshot().connections[id]
     try {
       const models = await this.track(this.operations.catalog(id))
-      if (this.disposed || selection !== this.selection || read !== this.catalogRead || modelEdits !== this.modelEdits) return
+      if (this.disposed || selection !== this.selection || read !== this.catalogRead || modelEdits !== this.modelEdits
+        || connection !== this.store.getSnapshot().connections[id]) return
       this.store.update((state) => {
         state.candidates = state.draft?.kind === 'subscription' ? models : mergeModels(state.candidates, models)
+        if (state.checks[id]?.failure === 'catalogFailed') state.checks[id].failure = undefined
       })
     } catch (_error) {
-      if (!this.disposed && selection === this.selection && read === this.catalogRead && modelEdits === this.modelEdits) {
+      if (!this.disposed && selection === this.selection && read === this.catalogRead && modelEdits === this.modelEdits
+        && connection === this.store.getSnapshot().connections[id]) {
+        const draft = this.store.getSnapshot().draft
+        if (draft !== null) {
+          const check = this.checkOf(draft)
+          this.store.update((state) => { state.checks[id] = { ...check, failure: 'catalogFailed' } })
+        }
         this.failure('catalogFailed', false)
       }
     } finally {
@@ -362,6 +425,8 @@ export class Controller {
     const removedIds = state.draft.models.filter(model => !patch.models?.some(next => next.id === model.id)).map(model => model.id)
     this.store.update((next) => {
       if (next.draft !== null) { Object.assign(next.draft, patch); next.draft.dirty = true }
+      const check = next.draft === null ? undefined : next.checks[next.draft.id]
+      if (patch.apiKey !== undefined && patch.apiKey !== state.draft?.apiKey && check !== undefined) check.verifiedModels = undefined
       next.error = null
       if (patch.models !== undefined && next.draft !== null) {
         next.candidates = mergeModels(next.candidates.filter(model => !removedIds.includes(model.id)),
@@ -389,8 +454,15 @@ export class Controller {
   cancel(): void {
     const state = this.store.getSnapshot()
     if (state.busy || state.loggingIn || state.draft?.configCommitted) return
-    const id = state.draft?.originalId
-    const source = state.draft?.source ?? ''
+    const draft = state.draft
+    const id = draft?.originalId
+    const source = draft?.source ?? ''
+    if (draft !== null && draft.apiKey !== '') {
+      this.store.update((next) => {
+        const check = next.checks[draft.id]
+        if (check !== undefined) check.verifiedModels = undefined
+      })
+    }
     this.drafts.delete(this.currentKey)
     this.currentKey = ''
     this.store.update((next) => { next.draft = null; next.error = null })
@@ -408,7 +480,33 @@ export class Controller {
     try { credential = await this.track(this.operations.describe(draft.apiKeyEnv || keyReference(draft.id))) }
     catch (_error) { credential = undefined /* Failed presence queries never clear stored secrets. */ }
     if (this.disposed || read !== this.credentialRead) return
-    this.store.update((state) => { state.credential = credential; state.credentialLoading = false })
+    const selected = this.store.getSnapshot().draft
+    if (selected === null) return
+    const check = this.checkOf(selected)
+    this.store.update((state) => {
+      state.credential = credential
+      state.credentialLoading = false
+      state.checks[selected.id] = {
+        ...check, credential,
+        verifiedModels: credential?.configured === true ? check.verifiedModels : undefined,
+      }
+    })
+  }
+
+  /**
+   * Invalidate live verification when a stored API key changes, including shared references.
+   * @param ref - changed credential reference.
+   */
+  credentialChanged(ref: string): void {
+    if (this.disposed) return
+    this.verificationEpoch++
+    this.store.update((state) => {
+      for (const check of Object.values(state.checks)) {
+        if (check.credentialRef === ref) { check.verifiedModels = undefined; check.credential = undefined }
+      }
+    })
+    const draft = this.store.getSnapshot().draft
+    if (draft?.kind === 'api' && (draft.apiKeyEnv || keyReference(draft.id)) === ref) void this.refreshCredential()
   }
 
   private async refreshStatus(selection = this.selection): Promise<void> {
@@ -418,10 +516,25 @@ export class Controller {
     try {
       const status = await this.track(this.operations.status(draft.id))
       if (!this.disposed && selection === this.selection && read === this.statusRead) {
-        this.store.update((state) => { state.subscription = status })
+        const check = this.checkOf(draft)
+        this.store.update((state) => {
+          state.subscription = status
+          state.checks[draft.id] = {
+            ...check, subscription: status,
+            verifiedModels: status.status === 'signed-in' && (check.subscription?.status !== 'signed-in'
+              || check.subscription.account === status.account) ? check.verifiedModels : undefined,
+          }
+        })
       }
     } catch (_error) {
-      if (!this.disposed && selection === this.selection && read === this.statusRead) this.failure('accountFailed', false)
+      if (!this.disposed && selection === this.selection && read === this.statusRead) {
+        const check = this.checkOf(draft)
+        this.store.update((state) => {
+          state.subscription = undefined
+          state.checks[draft.id] = { ...check, subscription: undefined, verifiedModels: undefined }
+        })
+        this.failure('accountFailed', false)
+      }
     }
   }
 
@@ -509,6 +622,7 @@ export class Controller {
     const invalid = validateDraft({ ...draft, models: [] })
     if (invalid !== undefined) { this.failure(invalid, false); return }
     const request = new AbortController()
+    const verificationEpoch = this.verificationEpoch
     this.request = request
     this.store.update((next) => { next.busy = true; next.error = null })
     try {
@@ -521,9 +635,14 @@ export class Controller {
       }, request.signal))
       if (this.disposed) return
       const declarations = draft.kind === 'subscription' ? candidates : mergeModels(connectionOf(draft).models ?? [], candidates)
+      const check = this.checkOf(draft)
       this.modelEdits++
       this.store.update((next) => {
         next.candidates = declarations
+        next.checks[draft.id] = {
+          ...check, verifiedModels: verificationEpoch === this.verificationEpoch ? candidates.map(model => model.id) : undefined,
+          failure: undefined,
+        }
         if (next.draft !== null) {
           next.draft.models = declarations.map(modelDraft)
           if (next.draft.enabledModels !== null) {
@@ -534,7 +653,13 @@ export class Controller {
       })
       if (draft.kind === 'subscription') await this.refreshStatus()
       this.notice('discovered')
-    } catch (_error) { if (!request.signal.aborted) this.failure('syncFailed') }
+    } catch (_error) {
+      if (!request.signal.aborted && !this.disposed) {
+        const check = this.checkOf(draft)
+        this.store.update((next) => { next.checks[draft.id] = { ...check, failure: 'syncFailed' } })
+        this.failure('syncFailed')
+      }
+    }
     finally {
       if (this.request === request) this.request = undefined
       if (!this.disposed) this.store.update((next) => { next.busy = false })
@@ -620,7 +745,11 @@ export class Controller {
       if (this.disposed) return
       this.modelEdits++
       await this.refreshStatus()
-      this.store.update((next) => { next.candidates = [] })
+      this.store.update((next) => {
+        next.candidates = []
+        const check = next.draft === null ? undefined : next.checks[next.draft.id]
+        if (check !== undefined) check.verifiedModels = undefined
+      })
       this.notice('signedOut')
     } catch (_error) { this.failure('failed') }
     finally { if (!this.disposed) this.store.update((next) => { next.busy = false }) }
@@ -645,6 +774,12 @@ export class Controller {
         if (this.disposed) return false
         this.statusRead++
         this.modelEdits++
+        this.store.update((next) => {
+          if (next.checks[id] !== undefined) {
+            next.checks[id].subscription = { status: 'signed-out' }
+            next.checks[id].verifiedModels = undefined
+          }
+        })
         if (state.draft?.id === id) this.store.update((next) => { next.subscription = { status: 'signed-out' }; next.candidates = [] })
       }
       const connections = Object.fromEntries(Object.entries(state.connections).filter(([key]) => key !== id))
