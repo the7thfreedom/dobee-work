@@ -1,0 +1,17 @@
+- dialog "Create an automation task":
+  - heading "Create an automation task" [level=2]
+  - button "Close creation guide"
+  - paragraph: Describe what to do and when. Next, review and send the request in a conversation so the assistant can create the task.
+  - text: What should the task do?
+  - textbox "What should the task do?":
+    - /placeholder: "For example: remind me to organize my daily report"
+    - text: Review the release checklist
+  - text: When should it run?
+  - textbox "When should it run?":
+    - /placeholder: "For example: every weekday at 9:00 AM"
+    - text: Every weekday at {{clock}} Asia/Shanghai
+  - paragraph: Include a date or repeat schedule and a time zone if needed.
+  - paragraph: This step only prepares a draft; it does not send a message or create a task. After you send it, the assistant may ask for details. A task card confirms creation.
+  - paragraph: Once created, return to Automation tasks to view, edit, or delete the task.
+  - button "Cancel"
+  - button "Continue to conversation"

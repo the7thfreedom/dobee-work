@@ -6,6 +6,8 @@ Conversation is the target-neutral assembly layer between a Client `SessionEvent
 
 This page defines the data model and the extension path for a business-owned Conversation node. The [Web Client architecture](web-client.md) places the subsystem between Client models and Slots; the [Conversation Node assembly decision](../../.agents/notes/implemented/architecture/2026-08-09-client-conversation-node-assembly.md) owns its rationale.
 
+Draft initialization accepts an optional `appendPrompt: true` alongside `prompt` to add plain text after existing content while preserving reference chips and attachments. Explicit `clearPreviousDraft` takes precedence; omitted append and clear options preserve an existing draft without adopting the new prompt. Initialization never submits a message and is refused while submission is pending or the input is disposed.
+
 ## Data model and ownership
 
 The Session Controller owns the contiguous loaded logical-event window. Each `SessionEventLikeEntry` is either `{ type: 'event', event: SessionEvent }` for one durable event or `{ type: 'transient', event: AssistantLiveChunkEvent }` for one Client-only `assistant/live-chunk` presentation. Both inner events expose `type`, `seq`, `time`, and `data`. `ui-conversation` passes these entries to the assembler without opening a second history stream. One `ConversationNodeAssembler` per Session applies every registered Definition and publishes an independent source for each registered view target.

@@ -4,7 +4,7 @@ import clsx from 'clsx'
 import {
   Button, IconClockOutlineRegular, IconCloseOutlineRegular, IconPlusOutlineRegular, IconSearchOutlineRegular, Input,
 } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { HostObservable, InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+import type { HostObservable, InjectFace, PropsLocale, PropsRenderSlots, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
 import type { ScheduleCatalogEntry, ScheduleId } from '@deepseek-ai/dsh-schedule/client'
 import type { CatalogSnapshot } from './catalog-source.ts'
@@ -30,6 +30,7 @@ export interface TaskManagerInjected extends TaskDetailInjected {
 export type TaskManagerPageProps = PropsRuntime<'main'>
   & InjectFace<TaskManagerInjected>
   & PropsLocale<'schedule.manager'>
+  & PropsRenderSlots<'schedule.manager.creation'>
 
 type StatusFilter = 'all' | ScheduleCatalogEntry['status']
 
@@ -39,7 +40,7 @@ type StatusFilter = 'all' | ScheduleCatalogEntry['status']
  * @returns the searchable task list beside the selected task's detail.
  */
 export function TaskManagerPage(props: TaskManagerPageProps) {
-  const { useCatalog, onNewTask, onRetry, t } = props
+  const { useCatalog, onNewTask, onRetry, renderSlot, t } = props
   const catalog = useCatalog(snapshot => snapshot)
   const { records, status } = catalog
   const [search, setSearch] = useState('')
@@ -117,7 +118,9 @@ export function TaskManagerPage(props: TaskManagerPageProps) {
             <div className={css.pageHeading}>
               <h1 ref={headingRef} tabIndex={-1}>{t('title')}</h1>
               <div className={css.creationActions}>
-                <Button variant="primary" size="sm" className={css.newButton} icon={<IconPlusOutlineRegular size={13} />} onClick={onNewTask}>{t('new.action')}</Button>
+                {renderSlot('schedule.manager.creation', { placement: 'header' }, {
+                  fallback: <Button variant="primary" size="sm" className={css.newButton} icon={<IconPlusOutlineRegular size={13} />} onClick={onNewTask}>{t('new.action')}</Button>,
+                })}
               </div>
             </div>
             <div className={css.filters}>
@@ -153,9 +156,11 @@ export function TaskManagerPage(props: TaskManagerPageProps) {
               {status === 'ready' && rows.length === 0 && <div className={css.empty} role="status">
                 <IconClockOutlineRegular size={24} className={css.emptyGlyph} />
                 <h2>{t(emptyTitle)}</h2>
-                <Button variant="outline" className={css.emptyAction} onClick={onNewTask}>
-                  {t('empty.action')}
-                </Button>
+                {renderSlot('schedule.manager.creation', { placement: 'empty' }, {
+                  fallback: <Button variant="outline" className={css.emptyAction} onClick={onNewTask}>
+                    {t('empty.action')}
+                  </Button>,
+                })}
               </div>}
               <ul className={css.listRows} aria-label={t('list.label')} aria-busy={status === 'loading'}>
                 {rows.map((record) => {

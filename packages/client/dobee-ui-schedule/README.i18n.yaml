@@ -1,0 +1,37 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/client/dobee-ui-schedule/README.md
+/:
+  en: c13635d4c018f1c2
+  zh: a554becfd9c0b4eb
+/deepseek-ai-dsh-client-dobee-ui-schedule:
+  en: cbb992b46d518732
+  zh: 164efba73aacf7a1
+/deepseek-ai-dsh-client-dobee-ui-schedule/summary:
+  en: 1af147ffe65cf561
+  zh: 6ea91f380b7b8638
+/deepseek-ai-dsh-client-dobee-ui-schedule/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 405b30feaf48c087
+/deepseek-ai-dsh-client-dobee-ui-schedule/use-this-package:
+  en: 9d3d13e72542aca5
+  zh: 76a4b9d27c7e5a43
+/deepseek-ai-dsh-client-dobee-ui-schedule/understand-the-implementation:
+  en: 5e8fcba5d98106b6
+  zh: 63af298f8da4f6db
+/deepseek-ai-dsh-client-dobee-ui-schedule/further-exploration:
+  en: 497f8a5385046f7a
+  zh: 1f75dc2a19e3d40a
+/deepseek-ai-dsh-client-dobee-ui-schedule/model-experience:
+  en: bab46500c7816741
+  zh: 6aefbe1728a122d4
+/deepseek-ai-dsh-client-dobee-ui-schedule/model-experience/kv-cache-effect:
+  en: 01c4379954190fa5
+  zh: 8213e93f69a99bfb
+/deepseek-ai-dsh-client-dobee-ui-schedule/known-limitations-and-deferred-work:
+  en: 6cae113fd352f4c5
+  zh: 557c1c17f2348b75
+/deepseek-ai-dsh-client-dobee-ui-schedule/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 8ec3e73528ddb1a6

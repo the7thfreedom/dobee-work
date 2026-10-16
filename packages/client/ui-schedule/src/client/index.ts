@@ -64,12 +64,26 @@ import { en as managerEn, zh as managerZh, type TaskManagerKey } from './task-ma
 const MANAGER_NS = 'schedule.manager'
 const PANEL_ID = 'schedules' as MainPanelId
 
+/** Placement of a task catalog creation entry. */
+export interface ScheduleCreationOwner {
+  /** Header toolbar or empty-state call to action. */
+  readonly placement: 'header' | 'empty'
+}
+
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
     /** Active Schedule catalog copy. */
     'schedule.catalog': ScheduleCatalogKey
     /** Host task management page and task tab copy. */
     'schedule.manager': TaskManagerKey
+  }
+  interface SlotMap {
+    /** Replace the task catalog's creation entry without replacing its list or details. */
+    'schedule.manager.creation': {
+      kind: 'single'
+      scope: 'root'
+      owner: ScheduleCreationOwner
+    }
   }
 }
 
@@ -169,6 +183,7 @@ export function apply(ctx: ClientContext): void {
     name: 'main',
     key: PANEL_ID,
     locale: MANAGER_NS,
+    children: { 'schedule.manager.creation': { kind: 'single', scope: 'root' } },
     inject: (): TaskManagerInjected => ({
       ...detail,
       // The page has no creation form: a new reminder starts in a Session.

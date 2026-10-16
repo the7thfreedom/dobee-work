@@ -1,0 +1,42 @@
+.entry {
+  display: flex;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 480px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dialog {
+  max-height: 100%;
+}
+
+.content {
+  min-height: 0;
+  overflow: auto;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--dsw-alias-label-primary);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.hint {
+  margin: 0;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}

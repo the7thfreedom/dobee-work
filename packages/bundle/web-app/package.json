@@ -52,6 +52,7 @@
   },
   "dependencies": {
     "@deepseek-ai/dsh-client-dobee-brand": "workspace:*",
+    "@deepseek-ai/dsh-client-dobee-ui-schedule": "workspace:*",
     "@deepseek-ai/dsh-agent-instructions": "workspace:*",
     "@deepseek-ai/dsh-agent-preset": "workspace:*",
     "@deepseek-ai/dsh-agent-preset-registry": "workspace:*",

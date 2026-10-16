@@ -121,6 +121,7 @@ function mount(
     onDelete: vi.fn<TaskManagerPageProps['onDelete']>(async () => 'deleted'),
     onRetry: vi.fn(async () => {}),
     onNewTask: vi.fn(),
+    renderSlot: (_key, _owner, options) => options?.fallback,
     onUpdateTiming: vi.fn<TaskManagerPageProps['onUpdateTiming']>(async ({ expected }) => ({
       ok: true, value: { id: expected.id, updated: false, record: expected },
     })),

@@ -10,6 +10,8 @@ This page documents slot ownership, component inputs, extension APIs, and the sh
 
 The plugin catalog declares `plugins.add.actions`, a root-scoped list for `MenuItemButton` rows after installation in the Add plugin menu. Its owner supplies `onDismiss()` to close the menu before starting an action. The slot follows the owning Plugins page declaration lifetime.
 
+The task catalog declares the root-scoped single slot `schedule.manager.creation` with `placement: 'header' | 'empty'`. Occupants replace the creation entry at that location; without an occupant, the catalog opens a new Session. [DobeeWork creation guidance](../../packages/client/dobee-ui-schedule/README.md) uses this slot to collect an instruction and timing before preparing an unsent conversation draft.
+
 ## Declaration and lifecycle
 
 `SlotMap` is the compile-time registry. A package declaration-merges the key, cardinality, scope, owner props, keyed props, and optional slot-level inject face. The runtime declaration is the matching `children` entry on the component that owns the render location.

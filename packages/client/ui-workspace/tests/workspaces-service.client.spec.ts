@@ -762,6 +762,7 @@ describe('UiWorkspaceService', () => {
       { name: 'empty text', options: { prompt: '' } },
       { name: 'clear without prompt', options: { clearPreviousDraft: true } },
       { name: 'reference-like text', options: { prompt: '🧭 @notes.md' } },
+      { name: 'appended text', options: { prompt: 'automation request', appendPrompt: true } },
     ])('prepares $name on the retained target before replacing the current selection', async ({ options }) => {
       const backing = persistSelection({})
       const b = bench({ workspaces: workspaceState([workspace('a')]) })
