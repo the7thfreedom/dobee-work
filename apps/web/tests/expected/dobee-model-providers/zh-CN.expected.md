@@ -5,8 +5,8 @@
     - button "API"
     - button "订阅"
   - button "DeepSeek — 已开启但未就绪：缺少 API Key" [pressed]: DeepSeek
-  - button "Work gateway — 已开启，可用": Work gateway
-  - button "硅基流动 — 已开启但未就绪：无法获取凭据状态": 硅基流动
+  - button "Work gateway — 已开启，配置就绪": Work gateway
+  - button "硅基流动 — 已开启但未就绪：缺少 API Key": 硅基流动
   - button "Anthropic Claude — 未配置": Anthropic Claude
   - button "Google Gemini — 未配置": Google Gemini
   - button "通义千问 — 未配置": 通义千问

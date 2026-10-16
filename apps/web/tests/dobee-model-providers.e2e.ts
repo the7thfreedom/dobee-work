@@ -15,9 +15,10 @@ it.each([
   ['en-US', 'light'], ['en-US', 'dark'], ['zh-CN', 'light'], ['zh-CN', 'dark'],
 ] as const)('shows one green, red, or grey provider indicator in %s / %s', async (locale, colorScheme) => {
   const requests: Array<{ path: string | undefined; authorization: string | undefined }> = []
+  let modelListStatus = 200
   const server = createServer((request, response) => {
     requests.push({ path: request.url, authorization: request.headers.authorization })
-    response.writeHead(request.headers.authorization === 'Bearer fixture-key' ? 200 : 401, { 'content-type': 'application/json' })
+    response.writeHead(request.headers.authorization === 'Bearer fixture-key' ? modelListStatus : 401, { 'content-type': 'application/json' })
     response.end(JSON.stringify({ data: [{ id: 'work-model' }] }))
   })
   onTestFinished(() => new Promise<void>((resolve, reject) => {
@@ -61,7 +62,7 @@ it.each([
   const work = sidebar.getByRole('button', { name: /^Work gateway / })
   expect(await work.locator('[data-state="idle"]').count()).toBe(1)
   const empty = sidebar.getByRole('button', { name: chinese ? /^硅基流动 / : /^SiliconFlow / })
-  expect(await empty.locator('[data-state="error"]').count()).toBe(1)
+  await expect.poll(() => empty.locator('[data-state="error"]').count()).toBe(1)
   const copilot = sidebar.getByRole('button', { name: /^GitHub Copilot / })
   expect(await copilot.locator('[data-state="idle"]').count()).toBe(1)
   expect(await dialog.getByPlaceholder(chinese ? '可选显示名称' : 'Optional display name').count()).toBe(0)
@@ -74,26 +75,50 @@ it.each([
     label: await work.getAttribute('aria-label'),
     alerts: await dialog.getByRole('alert').allTextContents(),
   })).toEqual({
-    label: `Work gateway — ${chinese ? '已开启但未验证：请同步模型以检查连接' : 'Enabled, not verified: sync models to check the connection'}`,
+    label: `Work gateway — ${chinese ? '已开启，配置就绪' : 'Enabled and configured'}`,
     alerts: [],
   })
+  expect(requests).toEqual([])
+  await dialog.getByLabel('Endpoint', { exact: true }).fill(`${endpoint}/unsaved`)
+  expect(await work.locator('[data-state="done"]').count()).toBe(1)
+  await deepseek.click()
+  expect(await work.locator('[data-state="done"]').count()).toBe(1)
+  await work.click()
+  expect(await work.locator('[data-state="done"]').count()).toBe(1)
+  await dialog.getByRole('button', { name: chinese ? '放弃更改' : 'Discard changes' }).click()
+  await expect.poll(() => dialog.getByLabel('Endpoint', { exact: true }).inputValue()).toBe(endpoint)
   await dialog.getByRole('button', { name: chinese ? '同步模型' : 'Sync models', exact: true }).click()
   await dialog.getByRole('button', { name: chinese ? '保存' : 'Save', exact: true }).click()
   await expect.poll(async () => ({
     label: await work.getAttribute('aria-label'),
     alerts: await dialog.getByRole('alert').allTextContents(),
-  })).toEqual({ label: `Work gateway — ${chinese ? '已开启，可用' : 'Enabled and ready'}`, alerts: [] })
+  })).toEqual({ label: `Work gateway — ${chinese ? '已开启，配置就绪' : 'Enabled and configured'}`, alerts: [] })
   expect(await work.locator('[data-state="done"]').count()).toBe(1)
   expect(requests).toEqual([{ path: '/v1/models', authorization: 'Bearer fixture-key' }])
+  modelListStatus = 404
+  await dialog.getByRole('button', { name: chinese ? '同步模型' : 'Sync models', exact: true }).click()
+  await expect.poll(() => dialog.getByRole('alert').count()).toBe(1)
+  expect(await work.locator('[data-state="done"]').count()).toBe(1)
+  await page.reload()
+  await page.locator('[class*="frame"]').first().waitFor()
+  await openSettings(page, chinese ? 'zh' : 'en')
+  await dialog.getByRole('button', { name: chinese ? '模型' : 'Models', exact: true }).click()
+  await expect.poll(() => work.locator('[data-state="done"]').count()).toBe(1)
+  expect(requests).toHaveLength(2)
   expect(await work.innerText()).toBe('Work gateway')
   await deepseek.click()
   await expect.poll(() => deepseek.getAttribute('aria-label')).toContain(missingKey)
   const expected = fileURLToPath(new URL(`./expected/dobee-model-providers/${locale}.expected.md`, import.meta.url))
   await mkdir(dirname(expected), { recursive: true })
   await compareOrRefreshGolden(expected, await captureStableAria(page, selector, scaffold.workspaceCwd), webSnapshotMode())
+  await work.click()
   await dialog.getByRole('switch', { name: chinese ? '启用提供商' : 'Enable provider' }).click()
-  await expect.poll(() => deepseek.locator('[data-state="idle"]').count()).toBe(1)
-  await dialog.getByRole('button', { name: chinese ? '放弃更改' : 'Discard changes' }).click()
+  expect(await work.locator('[data-state="done"]').count()).toBe(1)
+  await dialog.getByRole('button', { name: chinese ? '保存' : 'Save', exact: true }).click()
+  await expect.poll(() => work.locator('[data-state="idle"]').count()).toBe(1)
+  await dialog.getByRole('switch', { name: chinese ? '启用提供商' : 'Enable provider' }).click()
+  await dialog.getByRole('button', { name: chinese ? '保存' : 'Save', exact: true }).click()
+  await expect.poll(() => work.locator('[data-state="done"]').count()).toBe(1)
   await empty.click()
   await expect.poll(() => empty.locator('[data-state="error"]').count()).toBe(1)
   expect(await work.locator('[data-state="done"]').count()).toBe(1)
