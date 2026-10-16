@@ -5,8 +5,8 @@
     - button "API"
     - button "Subscription"
   - 'button "DeepSeek — Enabled, not ready: API key missing" [pressed]': DeepSeek
-  - button "Work gateway — Enabled and ready": Work gateway
-  - 'button "SiliconFlow — Enabled, not ready: credential status unavailable"': SiliconFlow
+  - button "Work gateway — Enabled and configured": Work gateway
+  - 'button "SiliconFlow — Enabled, not ready: API key missing"': SiliconFlow
   - button "Anthropic Claude — Not configured": Anthropic Claude
   - button "Google Gemini — Not configured": Google Gemini
   - button "Qwen — Not configured": Qwen

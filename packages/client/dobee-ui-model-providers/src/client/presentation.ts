@@ -1,6 +1,6 @@
 /** Localized brands and searchable aliases keyed by unchanged Host source IDs. */
 import type { LocaleKey } from './locales.ts'
-import { connectionOf, connectionTarget } from './controller.ts'
+import { connectionTarget } from './controller.ts'
 import type { PROTOCOLS, State } from './controller.ts'
 
 const presets: Record<string, { label: LocaleKey; aliases: LocaleKey }> = {
@@ -61,45 +61,48 @@ export function protocolLabel(protocol: typeof PROTOCOLS[number], t: (key: Local
 }
 
 /**
- * Project saved access and live model-interface verification into one readiness mark.
+ * Project saved credentials, account access, and enabled model configuration into one readiness mark.
  * @param state - current editor and retained provider checks.
  * @param id - saved or staged provider ID; absent for an unopened preset.
- * @returns green for verified readiness, red for enabled but not ready, or grey for disabled/unconfigured.
+ * @returns green for configured readiness, red for incomplete access or models, or grey while loading/disabled/unconfigured.
  */
 export function providerReadiness(state: State, id: string | undefined): {
   state: 'done' | 'error' | 'idle'
   label: LocaleKey
 } {
-  const draft = state.draft?.id === id ? state.draft : null
-  const saved = id === undefined ? undefined : state.connections[id]
-  if (id === undefined || (saved === undefined && draft?.originalId === undefined)) {
+  const connection = id === undefined ? undefined : state.connections[id]
+  if (id === undefined || connection === undefined) {
     return { state: 'idle', label: 'notConfigured' }
   }
-  const connection = draft === null ? saved : connectionOf(draft)
-  if (connection === undefined) return { state: 'idle', label: 'notConfigured' }
   if (connection.enabled === false) return { state: 'idle', label: 'disabled' }
-  if (draft?.dirty || draft?.configCommitted) return { state: 'error', label: 'providerUnsaved' }
-  const check = state.checks[id]
-  const matched = check?.target === connectionTarget(id, connection, state.presets)
+  const retained = state.checks[id]
+  const check = retained?.target === connectionTarget(id, connection, state.presets) ? retained : undefined
   const subscription = connection.source === 'github-copilot' || connection.kind === 'subscription'
   if (subscription) {
-    const account = draft === null ? check?.subscription : state.subscription ?? check?.subscription
+    const account = check?.subscription
     if (account?.status === 'signed-out') return { state: 'error', label: 'providerSignInRequired' }
     if (account?.status === 'expired') return { state: 'error', label: 'providerAccessExpired' }
-    if (account?.status !== 'signed-in') return { state: 'error', label: 'providerUnverified' }
+    if (account?.status !== 'signed-in') {
+      return { state: 'idle', label: 'providerAccountUnknown' }
+    }
   } else {
-    const credential = draft === null ? check?.credential : state.credential ?? check?.credential
+    const credential = check?.credential
     if (credential?.configured === false) return { state: 'error', label: 'providerMissingKey' }
     if (credential?.configured !== true) {
-      return { state: 'error', label: state.credentialLoading && draft !== null ? 'providerChecking' : 'providerCredentialUnknown' }
+      const loading = check === undefined || (state.credentialLoading && state.draft?.id === id)
+      return { state: 'idle', label: loading ? 'providerChecking' : 'providerCredentialUnknown' }
     }
   }
-  if (!matched) return { state: 'error', label: 'providerUnverified' }
-  if (check.failure !== undefined) return { state: 'error', label: 'providerVerificationFailed' }
-  if (check.verifiedModels === undefined) return { state: 'error', label: 'providerUnverified' }
-  const configured = connection.models
-  const available = check.verifiedModels.some(model =>
-    (configured === undefined || configured.length === 0 || configured.some(item => item.id === model))
-    && (connection.enabledModels === undefined || connection.enabledModels === null || connection.enabledModels.includes(model)))
+  const declared = connection.models
+  const models = !subscription && declared !== undefined && declared.length > 0
+    ? declared.map(model => model.id)
+    : check?.catalogModels
+  if (models === undefined) {
+    return check?.failure === 'catalogFailed'
+      ? { state: 'error', label: 'catalogFailed' }
+      : { state: 'idle', label: 'providerChecking' }
+  }
+  const available = models.some(model =>
+    connection.enabledModels === undefined || connection.enabledModels === null || connection.enabledModels.includes(model))
   return { state: available ? 'done' : 'error', label: available ? 'providerReady' : 'providerNoModels' }
 }

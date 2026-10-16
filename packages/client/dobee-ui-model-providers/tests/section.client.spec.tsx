@@ -35,6 +35,12 @@ function fixture(patch: Partial<State> = {}, chinese = false) {
     candidates: [{ id: 'model-a', name: 'Model A' }, { id: 'model-b' }], checks: {}, catalogLoading: false,
     loggingIn: false, busy: false, error: null, toast: null, ...patch,
   }
+  if (patch.checks === undefined) {
+    state.checks.deepseek = {
+      target: connectionTarget('deepseek', state.connections.deepseek!, state.presets),
+      catalogModels: ['model-a', 'model-b'], credential: state.credential,
+    }
+  }
   const dictionary: Record<string, string> = chinese ? zh : en
   const t: TranslateNS<'dobee.modelProviders'> = (key, params) => {
     let text = dictionary[key] ?? key
@@ -146,19 +152,28 @@ describe('two-pane provider settings', () => {
     expect(google.querySelectorAll('[data-state="idle"]')).toHaveLength(1)
   })
 
-  it('does not turn green from a configured key and an offline model catalog', () => {
-    const f = fixture()
+  it.each([false, true])('shows configured readiness without live model discovery (Chinese: %s)', (chinese) => {
+    const f = fixture({}, chinese)
     render(<Section {...f.props} />)
     const row = screen.getByRole('button', { name: /^DeepSeek / })
-    expect(row.getAttribute('aria-label')).toContain(en.providerUnverified)
-    expect(row.querySelector('[data-state="error"]')).not.toBeNull()
+    expect(row.getAttribute('aria-label')).toContain((chinese ? zh : en).providerReady)
+    expect(row.querySelector('[data-state="done"]')).not.toBeNull()
   })
 
-  it('shows green only after live verification and saved changes, and grey when disabled', () => {
+  it('keeps the provider neutral while its local model catalog is unavailable', () => {
+    const f = fixture()
+    f.state.checks.deepseek!.catalogModels = undefined
+    render(<Section {...f.props} />)
+    const row = screen.getByRole('button', { name: /^DeepSeek / })
+    expect(row.getAttribute('aria-label')).toContain(en.providerChecking)
+    expect(row.querySelector('[data-state="idle"]')).not.toBeNull()
+  })
+
+  it('keeps saved readiness independent of selected drafts and changes only when the saved provider is disabled', () => {
     const f = fixture()
     f.state.checks.deepseek = {
       target: connectionTarget('deepseek', connectionOf(editor()), f.state.presets),
-      verifiedModels: ['model-a'], credential: { configured: true, writable: true },
+      catalogModels: ['model-a'], credential: { configured: true, writable: true },
     }
     const view = render(<Section {...f.props} />)
     const row = () => screen.getByRole('button', { name: /^DeepSeek / })
@@ -166,9 +181,12 @@ describe('two-pane provider settings', () => {
     expect(row().querySelectorAll('[data-state="done"]')).toHaveLength(1)
     f.state.draft = editor({ dirty: true })
     view.rerender(<Section {...f.props} />)
-    expect(row().getAttribute('aria-label')).toContain(en.providerUnsaved)
-    expect(row().querySelector('[data-state="error"]')).not.toBeNull()
+    expect(row().getAttribute('aria-label')).toContain(en.providerReady)
+    expect(row().querySelector('[data-state="done"]')).not.toBeNull()
     f.state.draft = editor({ enabled: false })
+    view.rerender(<Section {...f.props} />)
+    expect(row().querySelector('[data-state="done"]')).not.toBeNull()
+    f.state.connections.deepseek = { ...f.state.connections.deepseek, enabled: false }
     view.rerender(<Section {...f.props} />)
     expect(row().getAttribute('aria-label')).toContain(en.disabled)
     expect(row().querySelector('[data-state="idle"]')).not.toBeNull()
@@ -178,7 +196,7 @@ describe('two-pane provider settings', () => {
     const f = fixture()
     f.state.checks.work = {
       target: connectionTarget('work', f.state.connections.work!, f.state.presets),
-      verifiedModels: ['work-model'], credential: { configured: true, writable: true },
+      catalogModels: ['work-model'], credential: { configured: true, writable: true },
     }
     render(<Section {...f.props} />)
     expect(screen.getByRole('button', { name: /^Work gateway / }).querySelector('[data-state="done"]')).not.toBeNull()

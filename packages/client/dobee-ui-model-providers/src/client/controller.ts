@@ -77,14 +77,14 @@ export interface Operations {
   cancelLogin: (connectionId: string) => Promise<void>
   logout: (connectionId: string) => Promise<void>
 }
-/** Credential presence and live model-interface evidence; no secret values are retained. */
+/** Host credential presence and local model metadata; no secret values are retained. */
 export interface ProviderCheck {
   target: string
   credentialRef?: string | undefined
   credential?: CredentialInfo | undefined
   subscription?: SubscriptionStatus | undefined
-  verifiedModels?: string[] | undefined
-  failure?: 'catalogFailed' | 'syncFailed' | undefined
+  catalogModels?: string[] | undefined
+  failure?: 'catalogFailed' | undefined
 }
 /** Framework-observed provider page state. */
 export interface State {
@@ -98,7 +98,7 @@ export interface State {
   credential?: CredentialInfo | undefined
   credentialLoading: boolean
   candidates: Model[]
-  /** Readiness evidence retained across selection, not across application restarts. */
+  /** Local configuration status refreshed from the Host and retained across selection. */
   checks: Record<string, ProviderCheck>
   catalogLoading: boolean
   subscription?: SubscriptionStatus | undefined
@@ -126,7 +126,7 @@ export function keyReference(id: string): string {
 export function providerRoute(id: string): string { return `dobee-${id}` }
 
 /**
- * Identify the effective endpoint and credential reference used for connection verification.
+ * Identify the effective endpoint and credential reference used for cached configuration status.
  * @param id - connection ID.
  * @param connection - saved or staged secret-free settings.
  * @param presets - loaded provider defaults.
@@ -235,7 +235,7 @@ export class Controller {
   private catalogRead = 0
   private statusRead = 0
   private modelEdits = 0
-  private verificationEpoch = 0
+  private credentialVersion = 0
   private sequence = 0
   private presetsReady = false
   private request: AbortController | undefined
@@ -290,11 +290,16 @@ export class Controller {
     })
     if (refreshDraft) this.cancel()
     if (this.presetsReady && snapshot.status === 'ready' && this.store.getSnapshot().draft === null) this.openInitial()
+    if (this.presetsReady && snapshot.status === 'ready') {
+      for (const [id, connection] of Object.entries(connections)) {
+        if (previous[id] !== connection) void this.loadSavedInfo(id, connection)
+      }
+    }
   }
 
   private checkOf(draft: Draft): ProviderCheck {
     const state = this.store.getSnapshot()
-    const target = connectionTarget(draft.id, connectionOf(draft), state.presets)
+    const target = connectionTarget(draft.id, state.connections[draft.id] ?? connectionOf(draft), state.presets)
     const check = state.checks[draft.id]
     return check?.target === target ? check : {
       target,
@@ -313,7 +318,33 @@ export class Controller {
       this.presetsReady = true
       this.store.update((state) => { state.presets = presets; state.error = null })
       if (this.store.getSnapshot().draft === null) this.openInitial()
+      for (const [id, connection] of Object.entries(this.store.getSnapshot().connections)) {
+        if (this.store.getSnapshot().draft?.id !== id) void this.loadSavedInfo(id, connection)
+      }
     } catch (_error) { this.failure('catalogFailed', false) }
+  }
+
+  private async loadSavedInfo(id: string, connection: Connection): Promise<void> {
+    if (connection.enabled === false) return
+    const version = this.credentialVersion
+    const target = connectionTarget(id, connection, this.store.getSnapshot().presets)
+    const subscription = connection.source === 'github-copilot' || connection.kind === 'subscription'
+    const reference = connection.apiKeyEnv || keyReference(id)
+    const [access, catalog] = await this.track(Promise.allSettled([
+      subscription
+        ? this.operations.status(id).then(subscription => ({ subscription }))
+        : this.operations.describe(reference).then(credential => ({ credential })),
+      this.operations.catalog(id),
+    ]))
+    if (this.disposed || version !== this.credentialVersion || this.store.getSnapshot().connections[id] !== connection) return
+    this.store.update((state) => {
+      state.checks[id] = {
+        target, credentialRef: subscription ? undefined : reference,
+        ...(access.status === 'fulfilled' ? access.value : {}),
+        catalogModels: catalog.status === 'fulfilled' ? catalog.value.map(model => model.id) : undefined,
+        failure: catalog.status === 'rejected' ? 'catalogFailed' : undefined,
+      }
+    })
   }
 
   private openInitial(): void {
@@ -386,7 +417,12 @@ export class Controller {
         || connection !== this.store.getSnapshot().connections[id]) return
       this.store.update((state) => {
         state.candidates = state.draft?.kind === 'subscription' ? models : mergeModels(state.candidates, models)
-        if (state.checks[id]?.failure === 'catalogFailed') state.checks[id].failure = undefined
+        const draft = state.draft
+        if (draft !== null) {
+          state.checks[id] = {
+            ...this.checkOf(draft), catalogModels: models.map(model => model.id), failure: undefined,
+          }
+        }
       })
     } catch (_error) {
       if (!this.disposed && selection === this.selection && read === this.catalogRead && modelEdits === this.modelEdits
@@ -425,8 +461,6 @@ export class Controller {
     const removedIds = state.draft.models.filter(model => !patch.models?.some(next => next.id === model.id)).map(model => model.id)
     this.store.update((next) => {
       if (next.draft !== null) { Object.assign(next.draft, patch); next.draft.dirty = true }
-      const check = next.draft === null ? undefined : next.checks[next.draft.id]
-      if (patch.apiKey !== undefined && patch.apiKey !== state.draft?.apiKey && check !== undefined) check.verifiedModels = undefined
       next.error = null
       if (patch.models !== undefined && next.draft !== null) {
         next.candidates = mergeModels(next.candidates.filter(model => !removedIds.includes(model.id)),
@@ -457,12 +491,6 @@ export class Controller {
     const draft = state.draft
     const id = draft?.originalId
     const source = draft?.source ?? ''
-    if (draft !== null && draft.apiKey !== '') {
-      this.store.update((next) => {
-        const check = next.checks[draft.id]
-        if (check !== undefined) check.verifiedModels = undefined
-      })
-    }
     this.drafts.delete(this.currentKey)
     this.currentKey = ''
     this.store.update((next) => { next.draft = null; next.error = null })
@@ -486,27 +514,28 @@ export class Controller {
     this.store.update((state) => {
       state.credential = credential
       state.credentialLoading = false
-      state.checks[selected.id] = {
-        ...check, credential,
-        verifiedModels: credential?.configured === true ? check.verifiedModels : undefined,
-      }
+      state.checks[selected.id] = { ...check, credential }
     })
   }
 
   /**
-   * Invalidate live verification when a stored API key changes, including shared references.
+   * Refresh credential presence when a stored API key changes, including shared references.
    * @param ref - changed credential reference.
    */
   credentialChanged(ref: string): void {
     if (this.disposed) return
-    this.verificationEpoch++
+    this.credentialVersion++
     this.store.update((state) => {
       for (const check of Object.values(state.checks)) {
-        if (check.credentialRef === ref) { check.verifiedModels = undefined; check.credential = undefined }
+        if (check.credentialRef === ref) check.credential = undefined
       }
     })
-    const draft = this.store.getSnapshot().draft
+    const state = this.store.getSnapshot()
+    const draft = state.draft
     if (draft?.kind === 'api' && (draft.apiKeyEnv || keyReference(draft.id)) === ref) void this.refreshCredential()
+    for (const [id, connection] of Object.entries(state.connections)) {
+      if (draft?.id !== id) void this.loadSavedInfo(id, connection)
+    }
   }
 
   private async refreshStatus(selection = this.selection): Promise<void> {
@@ -521,8 +550,8 @@ export class Controller {
           state.subscription = status
           state.checks[draft.id] = {
             ...check, subscription: status,
-            verifiedModels: status.status === 'signed-in' && (check.subscription?.status !== 'signed-in'
-              || check.subscription.account === status.account) ? check.verifiedModels : undefined,
+            catalogModels: status.status === 'signed-in' && (check.subscription?.status !== 'signed-in'
+              || check.subscription.account === status.account) ? check.catalogModels : undefined,
           }
         })
       }
@@ -531,7 +560,7 @@ export class Controller {
         const check = this.checkOf(draft)
         this.store.update((state) => {
           state.subscription = undefined
-          state.checks[draft.id] = { ...check, subscription: undefined, verifiedModels: undefined }
+          state.checks[draft.id] = { ...check, subscription: undefined, catalogModels: undefined }
         })
         this.failure('accountFailed', false)
       }
@@ -622,7 +651,6 @@ export class Controller {
     const invalid = validateDraft({ ...draft, models: [] })
     if (invalid !== undefined) { this.failure(invalid, false); return }
     const request = new AbortController()
-    const verificationEpoch = this.verificationEpoch
     this.request = request
     this.store.update((next) => { next.busy = true; next.error = null })
     try {
@@ -635,14 +663,9 @@ export class Controller {
       }, request.signal))
       if (this.disposed) return
       const declarations = draft.kind === 'subscription' ? candidates : mergeModels(connectionOf(draft).models ?? [], candidates)
-      const check = this.checkOf(draft)
       this.modelEdits++
       this.store.update((next) => {
         next.candidates = declarations
-        next.checks[draft.id] = {
-          ...check, verifiedModels: verificationEpoch === this.verificationEpoch ? candidates.map(model => model.id) : undefined,
-          failure: undefined,
-        }
         if (next.draft !== null) {
           next.draft.models = declarations.map(modelDraft)
           if (next.draft.enabledModels !== null) {
@@ -655,8 +678,6 @@ export class Controller {
       this.notice('discovered')
     } catch (_error) {
       if (!request.signal.aborted && !this.disposed) {
-        const check = this.checkOf(draft)
-        this.store.update((next) => { next.checks[draft.id] = { ...check, failure: 'syncFailed' } })
         this.failure('syncFailed')
       }
     }
@@ -748,7 +769,7 @@ export class Controller {
       this.store.update((next) => {
         next.candidates = []
         const check = next.draft === null ? undefined : next.checks[next.draft.id]
-        if (check !== undefined) check.verifiedModels = undefined
+        if (check !== undefined) check.catalogModels = undefined
       })
       this.notice('signedOut')
     } catch (_error) { this.failure('failed') }
@@ -777,7 +798,7 @@ export class Controller {
         this.store.update((next) => {
           if (next.checks[id] !== undefined) {
             next.checks[id].subscription = { status: 'signed-out' }
-            next.checks[id].verifiedModels = undefined
+            next.checks[id].catalogModels = undefined
           }
         })
         if (state.draft?.id === id) this.store.update((next) => { next.subscription = { status: 'signed-out' }; next.candidates = [] })

@@ -137,35 +137,36 @@ describe('provider selection and model lists', () => {
     expect(f.operations.discover).not.toHaveBeenCalled()
   })
 
-  it('requires live verification rather than an offline catalog and retains it across selection', async () => {
+  it('uses the local catalog for readiness and retains configuration status across selection', async () => {
     const f = await fixture()
-    expect(f.state().checks.deepseek?.verifiedModels).toBeUndefined()
-    expect(providerReadiness(f.state(), 'deepseek').label).toBe('providerUnverified')
+    expect(f.state().checks.deepseek?.catalogModels).toEqual(['model-a', 'model-b'])
+    expect(providerReadiness(f.state(), 'deepseek').label).toBe('providerReady')
     await f.controller.discover()
-    expect(providerReadiness(f.state(), 'deepseek').label).toBe('providerUnsaved')
+    expect(providerReadiness(f.state(), 'deepseek').label).toBe('providerReady')
     await f.controller.save()
     expect(providerReadiness(f.state(), 'deepseek').state).toBe('done')
     f.controller.open('work')
     await vi.waitFor(() => { expect(f.state().catalogLoading).toBe(false) })
-    expect(f.state().checks.work?.verifiedModels).toBeUndefined()
+    expect(f.state().checks.work?.catalogModels).toEqual(['model-a', 'model-b'])
     expect(providerReadiness(f.state(), 'deepseek').state).toBe('done')
     f.defaults.publish({ revision: 4 })
-    expect(f.state().checks.deepseek?.verifiedModels).toEqual(['synced'])
+    expect(f.state().checks.deepseek?.catalogModels).toEqual(['model-a', 'model-b'])
     f.settings.publish({ value: { connections: { deepseek: { source: 'deepseek', baseURL: 'https://new.example/v1' } } } })
     expect(f.state().checks).toEqual({})
   })
 
   it('distinguishes an empty catalog from a failed read and clears failure on retry', async () => {
-    const catalog = vi.fn<Operations['catalog']>().mockResolvedValueOnce([])
+    const replies = vi.fn<Operations['catalog']>().mockResolvedValueOnce([])
       .mockRejectedValueOnce(new Error('catalog unavailable')).mockResolvedValueOnce([{ id: 'recovered' }])
+    const catalog = vi.fn<Operations['catalog']>(id => id === 'deepseek' ? replies(id) : Promise.resolve([]))
     const f = await fixture({ catalog })
-    expect(f.state().checks.deepseek?.verifiedModels).toBeUndefined()
+    expect(f.state().checks.deepseek?.catalogModels).toEqual([])
     await f.controller.refreshInfo()
     expect(f.state().checks.deepseek?.failure).toBe('catalogFailed')
     expect(f.state().error).toBe('catalogFailed')
     await f.controller.refreshInfo()
     expect(f.state().checks.deepseek?.failure).toBeUndefined()
-    expect(f.state().checks.deepseek?.verifiedModels).toBeUndefined()
+    expect(f.state().checks.deepseek?.catalogModels).toEqual(['recovered'])
     expect(f.state().error).toBeNull()
   })
 
@@ -213,7 +214,7 @@ describe('provider selection and model lists', () => {
     })])
     expect(f.state().candidates[0]?.id).toBe('synced')
     expect(f.state().draft?.dirty).toBe(true)
-    expect(f.state().checks.deepseek?.verifiedModels).toEqual(['synced'])
+    expect(f.state().checks.deepseek?.catalogModels).toEqual(['model-a', 'model-b'])
     expect(JSON.stringify(f.state().checks)).not.toContain('draft-key')
   })
 
@@ -440,7 +441,7 @@ describe('subscription authorization', () => {
     await vi.waitFor(() => { expect(f.state().subscription?.status).toBe('signed-in') })
     await f.controller.discover()
     expect(f.state().candidates.map(model => model.id)).toEqual(['synced'])
-    expect(f.state().checks.copilot?.verifiedModels).toEqual(['synced'])
+    expect(f.state().checks.copilot?.catalogModels).toEqual(['model-a', 'model-b'])
     expect(f.state().draft?.models.map(model => model.id)).toEqual(['synced'])
   })
 
@@ -497,7 +498,7 @@ describe('subscription authorization', () => {
     expect(f.operations.logout).toHaveBeenCalledWith('copilot')
     expect(f.state().subscription?.status).toBe('signed-out')
     expect(f.state().candidates).toEqual([])
-    expect(f.state().checks.copilot?.verifiedModels).toBeUndefined()
+    expect(f.state().checks.copilot?.catalogModels).toBeUndefined()
     expect(f.operations.setCredential).not.toHaveBeenCalled()
   })
 
@@ -526,7 +527,7 @@ describe('subscription authorization', () => {
     expect(await f.controller.remove('copilot')).toBe(false)
     expect(f.state().draft?.id).toBe('copilot')
     expect(f.state().subscription?.status).toBe('signed-out')
-    expect(f.state().checks.copilot?.verifiedModels).toBeUndefined()
+    expect(f.state().checks.copilot?.catalogModels).toBeUndefined()
   })
 
   it('fences deletion to the revision confirmed before subscription logout', async () => {
@@ -544,6 +545,76 @@ describe('subscription authorization', () => {
 })
 
 describe('provider readiness', () => {
+  it('loads readiness for unselected saved providers without contacting their model-list endpoints', async () => {
+    const f = await fixture()
+    await vi.waitFor(() => { expect(providerReadiness(f.state(), 'work').state).toBe('done') })
+    expect(f.state().draft?.id).toBe('deepseek')
+    expect(f.operations.discover).not.toHaveBeenCalled()
+  })
+
+  it('reports a failed unselected local catalog read without declaring the provider configured', async () => {
+    const f = await fixture({
+      catalog: vi.fn(async (id) => {
+        if (id === 'work') throw new Error('local catalog unavailable')
+        return [{ id: 'model-a' }]
+      }),
+    })
+    await vi.waitFor(() => {
+      expect(providerReadiness(f.state(), 'work')).toEqual({ state: 'error', label: 'catalogFailed' })
+    })
+    expect(f.state().error).toBeNull()
+  })
+
+  it('keeps unknown unselected credential presence neutral when a Host read fails', async () => {
+    const f = await fixture({
+      describe: vi.fn(async (ref) => {
+        if (ref === 'DOBEE_WORK_API_KEY') throw new Error('credential status unavailable')
+        return { configured: true, writable: true }
+      }),
+    })
+    await vi.waitFor(() => {
+      expect(providerReadiness(f.state(), 'work')).toEqual({ state: 'idle', label: 'providerCredentialUnknown' })
+    })
+    expect(providerReadiness(f.state(), 'deepseek').state).toBe('done')
+  })
+
+  it('keeps the saved provider ready when selecting, leaving, and restoring a dirty draft', async () => {
+    const f = await fixture()
+    f.controller.edit({ baseURL: 'https://unsaved.example/v1', enabled: false, models: [] })
+    expect(providerReadiness(f.state(), 'deepseek')).toEqual({ state: 'done', label: 'providerReady' })
+    f.controller.open('work')
+    expect(providerReadiness(f.state(), 'deepseek')).toEqual({ state: 'done', label: 'providerReady' })
+    f.controller.open('deepseek')
+    expect(f.state().draft).toMatchObject({ dirty: true, enabled: false })
+    expect(providerReadiness(f.state(), 'deepseek')).toEqual({ state: 'done', label: 'providerReady' })
+    expect(f.operations.discover).not.toHaveBeenCalled()
+  })
+
+  it('marks a saved custom API provider ready without live model discovery, including after a client restart', async () => {
+    const f = await fixture()
+    f.settings.publish({ value: { connections: {
+      gateway: {
+        displayName: 'OpenClawd', baseURL: 'https://gateway.example/v1', api: 'openai-completions',
+        apiKeyEnv: 'GATEWAY_KEY', models: [{ id: 'chat-model' }],
+      },
+    } } })
+    const controller = new Controller(f.settings.scope, f.defaults.scope, f.operations)
+    controllers.push(controller)
+    await vi.waitFor(() => {
+      expect(providerReadiness(controller.store.getSnapshot(), 'gateway')).toEqual({ state: 'done', label: 'providerReady' })
+    })
+    expect(f.operations.discover).not.toHaveBeenCalled()
+    expect(f.operations.setCredential).not.toHaveBeenCalled()
+  })
+
+  it('keeps a configured API provider ready when its optional model-list request fails', async () => {
+    const f = await fixture({ discover: vi.fn(async () => { throw new Error('model listing unsupported') }) })
+    await f.controller.discover()
+    expect(f.state().error).toBe('syncFailed')
+    expect(providerReadiness(f.state(), 'deepseek')).toEqual({ state: 'done', label: 'providerReady' })
+    expect(f.state().candidates.map(model => model.id)).toEqual(['model-a', 'model-b'])
+  })
+
   it('refreshes a clean saved draft revision before the next sync and save', async () => {
     const f = await fixture()
     await f.controller.save()
@@ -578,45 +649,48 @@ describe('provider readiness', () => {
     expect(f.operations.discover).not.toHaveBeenCalled()
   })
 
-  it('requires an available enabled model from the live response', async () => {
+  it('keeps manually declared models ready without live listing membership and requires an enabled model', async () => {
     const f = await fixture({ discover: vi.fn(async () => []) })
     f.controller.edit({ models: [modelDraft({ id: 'manual' })] })
     await f.controller.discover()
     await f.controller.save()
     expect(f.state().candidates).toHaveLength(1)
-    expect(providerReadiness(f.state(), 'deepseek').label).toBe('providerNoModels')
+    expect(providerReadiness(f.state(), 'deepseek').label).toBe('providerReady')
     vi.mocked(f.operations.discover).mockResolvedValueOnce([{ id: 'manual' }])
     await f.controller.discover()
     f.controller.edit({ enabledModels: [] })
     await f.controller.save()
+    f.settings.publish({ value: { connections: { deepseek: connectionOf(f.state().draft!) } } })
     expect(providerReadiness(f.state(), 'deepseek').label).toBe('providerNoModels')
   })
 
-  it('turns a verified provider red after a failed live sync while retaining its models', async () => {
+  it('retains configured readiness after a failed live sync and reports the operation failure', async () => {
     const f = await fixture()
     await f.controller.discover()
     await f.controller.save()
     expect(providerReadiness(f.state(), 'deepseek').state).toBe('done')
     vi.mocked(f.operations.discover).mockRejectedValueOnce(new Error('unauthorized'))
     await f.controller.discover()
-    expect(providerReadiness(f.state(), 'deepseek').label).toBe('providerVerificationFailed')
+    expect(providerReadiness(f.state(), 'deepseek').label).toBe('providerReady')
+    expect(f.state().error).toBe('syncFailed')
     expect(f.state().candidates).toHaveLength(1)
   })
 
-  it('retains verification through model saves but invalidates a replacement API key', async () => {
+  it('retains catalog metadata when a staged replacement API key is discarded', async () => {
     const f = await fixture()
     await f.controller.discover()
     await f.controller.save()
     f.settings.publish({ value: { connections: { deepseek: connectionOf(f.state().draft!) } } })
-    expect(f.state().checks.deepseek?.verifiedModels).toEqual(['synced'])
+    expect(f.state().checks.deepseek?.catalogModels).toEqual(['model-a', 'model-b'])
     f.controller.edit({ apiKey: 'replacement-key' })
-    expect(f.state().checks.deepseek?.verifiedModels).toBeUndefined()
+    expect(f.state().checks.deepseek?.catalogModels).toEqual(['model-a', 'model-b'])
+    expect(providerReadiness(f.state(), 'deepseek').label).toBe('providerReady')
     f.controller.cancel()
     await vi.waitFor(() => { expect(f.state().credentialLoading).toBe(false) })
-    expect(providerReadiness(f.state(), 'deepseek').label).toBe('providerUnverified')
+    expect(providerReadiness(f.state(), 'deepseek').label).toBe('providerReady')
   })
 
-  it('invalidates live verification for every provider sharing a changed credential', async () => {
+  it('refreshes credential presence for every provider sharing a changed credential without requiring live sync', async () => {
     const f = await fixture()
     const connections = f.state().connections
     f.settings.publish({ value: { connections: { ...connections, work: { ...connections.work, apiKeyEnv: 'SHARED_KEY' } } } })
@@ -626,23 +700,29 @@ describe('provider readiness', () => {
     await vi.waitFor(() => { expect(f.state().credentialLoading).toBe(false) })
     await f.controller.discover()
     await f.controller.save()
-    expect(f.state().checks.deepseek?.verifiedModels).toEqual(['synced'])
-    expect(f.state().checks.work?.verifiedModels).toEqual(['synced'])
+    expect(f.state().checks.deepseek?.catalogModels).toEqual(['model-a', 'model-b'])
+    expect(f.state().checks.work?.catalogModels).toEqual(['model-a', 'model-b'])
     f.controller.credentialChanged('UNRELATED_KEY')
-    expect(f.state().checks.deepseek?.verifiedModels).toEqual(['synced'])
+    expect(f.state().checks.deepseek?.catalogModels).toEqual(['model-a', 'model-b'])
     f.controller.credentialChanged('SHARED_KEY')
-    expect(f.state().checks.deepseek?.verifiedModels).toBeUndefined()
-    expect(f.state().checks.work?.verifiedModels).toBeUndefined()
+    expect(f.state().checks.deepseek?.credential).toBeUndefined()
+    expect(f.state().checks.work?.credential).toBeUndefined()
+    await vi.waitFor(() => {
+      expect(providerReadiness(f.state(), 'deepseek').state).toBe('done')
+      expect(providerReadiness(f.state(), 'work').state).toBe('done')
+    })
   })
 
-  it('does not verify a new credential from a response issued with an older credential', async () => {
+  it('keeps catalog discovery separate from current credential presence', async () => {
     const discovered = Promise.withResolvers<Awaited<ReturnType<Operations['discover']>>>()
     const f = await fixture({ discover: vi.fn(() => discovered.promise) })
     const syncing = f.controller.discover()
     f.controller.credentialChanged('SHARED_KEY')
     discovered.resolve([{ id: 'from-old-key' }])
     await syncing
-    expect(f.state().checks.deepseek?.verifiedModels).toBeUndefined()
+    expect(f.state().checks.deepseek?.catalogModels).toEqual(['model-a', 'model-b'])
+    expect(f.state().checks.deepseek?.credential?.configured).toBe(true)
+    expect(providerReadiness(f.state(), 'deepseek').label).toBe('providerReady')
     expect(f.state().candidates[0]?.id).toBe('from-old-key')
   })
 
@@ -651,6 +731,7 @@ describe('provider readiness', () => {
     f.controller.open('copilot')
     f.controller.edit({ enabled: true })
     await f.controller.save()
+    f.settings.publish({ value: { connections: { ...f.state().connections, copilot: connectionOf(f.state().draft!) } } })
     await vi.waitFor(() => { expect(f.state().subscription?.status).toBe('signed-out') })
     expect(providerReadiness(f.state(), 'copilot').label).toBe('providerSignInRequired')
     vi.mocked(f.operations.status).mockResolvedValueOnce({ status: 'expired', account: 'octocat' })
@@ -658,24 +739,37 @@ describe('provider readiness', () => {
     expect(providerReadiness(f.state(), 'copilot').label).toBe('providerAccessExpired')
   })
 
-  it('requires live verification for a signed-in subscription and clears it when account reads fail', async () => {
+  it('uses signed-in subscription access and its local catalog, and reports failed account reads', async () => {
     const f = await fixture({ status: vi.fn<Operations['status']>(async () => ({ status: 'signed-in', account: 'octocat' })) })
     f.controller.open('copilot')
     await vi.waitFor(() => { expect(f.state().subscription?.status).toBe('signed-in') })
     f.controller.edit({ enabled: true })
     await f.controller.save()
-    expect(providerReadiness(f.state(), 'copilot').label).toBe('providerUnverified')
+    f.settings.publish({ value: { connections: { ...f.state().connections, copilot: connectionOf(f.state().draft!) } } })
+    expect(providerReadiness(f.state(), 'copilot').label).toBe('providerReady')
     await f.controller.discover()
     await f.controller.save()
     expect(providerReadiness(f.state(), 'copilot').state).toBe('done')
     vi.mocked(f.operations.status).mockRejectedValueOnce(new Error('account unavailable'))
     await f.controller.refreshInfo()
-    expect(providerReadiness(f.state(), 'copilot').state).toBe('error')
-    expect(f.state().checks.copilot?.verifiedModels).toBeUndefined()
+    expect(providerReadiness(f.state(), 'copilot')).toEqual({ state: 'idle', label: 'providerAccountUnknown' })
+    expect(f.state().error).toBe('accountFailed')
+    expect(f.state().checks.copilot?.catalogModels).toBeUndefined()
   })
 })
 
 describe('selection and teardown races', () => {
+  it('joins pending sidebar metadata reads during disposal without publishing their late results', async () => {
+    const catalog = Promise.withResolvers<Awaited<ReturnType<Operations['catalog']>>>()
+    const f = await fixture({ catalog: vi.fn(id => id === 'work' ? catalog.promise : Promise.resolve([{ id: 'model-a' }])) })
+    const before = f.state().checks.work
+    const disposed = f.controller.dispose()
+    catalog.resolve([{ id: 'late-model' }])
+    await disposed
+    expect(f.state().checks.work).toBe(before)
+    expect(f.state().draft).toBeNull()
+  })
+
   it('ignores an offline catalog response after its connection configuration changes', async () => {
     const catalog = Promise.withResolvers<Awaited<ReturnType<Operations['catalog']>>>()
     const f = await fixture()
@@ -686,7 +780,7 @@ describe('selection and teardown races', () => {
     } } })
     catalog.resolve([{ id: 'old-endpoint-model' }])
     await vi.waitFor(() => { expect(f.state().catalogLoading).toBe(false) })
-    expect(f.state().checks.work?.verifiedModels).toBeUndefined()
+    expect(f.state().checks.work?.catalogModels).toEqual(['model-a', 'model-b'])
     expect(f.state().candidates.some(model => model.id === 'old-endpoint-model')).toBe(false)
   })
 
@@ -699,7 +793,7 @@ describe('selection and teardown races', () => {
     catalog.resolve([{ id: 'outdated-catalog' }])
     await vi.waitFor(() => { expect(f.state().catalogLoading).toBe(false) })
     expect(f.state().candidates.map(model => model.id)).toEqual(['synced'])
-    expect(f.state().checks.work?.verifiedModels).toEqual(['synced'])
+    expect(f.state().checks.work?.catalogModels).toEqual(['model-a', 'model-b'])
   })
 
   it('ignores stale catalog and credential replies after selecting another provider', async () => {
@@ -718,7 +812,7 @@ describe('selection and teardown races', () => {
     expect(f.state().draft?.id).toBe('copilot')
     expect(f.state().candidates.some(model => model.id === 'stale')).toBe(false)
     expect(f.state().credential).toBeUndefined()
-    expect(f.state().checks.work?.verifiedModels).toBeUndefined()
+    expect(f.state().checks.work?.catalogModels).not.toContain('stale')
   })
 
   it('ignores a late config completion and withdraws both form listeners during disposal', async () => {
