@@ -226,6 +226,8 @@ export interface SessionInputResolver {
 export interface DraftInitializationOptions {
   readonly prompt?: string
   readonly clearPreviousDraft?: boolean
+  /** Append the prompt after existing content and preserve reference chips; explicit clearing takes precedence. */
+  readonly appendPrompt?: boolean
 }
 
 /** An initialization request never waits for a React mount or a remote catalog. */

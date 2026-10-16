@@ -32,6 +32,8 @@
       "@deepseek-ai/dsh-client-dobee-ui-model-providers": ["./packages/client/dobee-ui-model-providers/src/index.ts"],
       "@deepseek-ai/dsh-client-dobee-brand": ["./packages/client/dobee-brand/src/index.ts"],
       "@deepseek-ai/dsh-client-dobee-brand/client": ["./packages/client/dobee-brand/src/client/index.ts"],
+      "@deepseek-ai/dsh-client-dobee-ui-schedule": ["./packages/client/dobee-ui-schedule/src/index.ts"],
+      "@deepseek-ai/dsh-client-dobee-ui-schedule/client": ["./packages/client/dobee-ui-schedule/src/client/index.ts"],
       "@deepseek-ai/dsh-client-dobee-ui-model-providers/client": ["./packages/client/dobee-ui-model-providers/src/client/index.ts"],
       "@deepseek-ai/dsh-client-product-analytics": ["./packages/client/product-analytics/src/index.ts"],
       "@deepseek-ai/dsh-client-product-analytics/types": ["./packages/client/product-analytics/src/events.ts"],

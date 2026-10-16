@@ -1,0 +1,17 @@
+- dialog "创建自动化任务":
+  - heading "创建自动化任务" [level=2]
+  - button "关闭创建引导"
+  - paragraph: 先填写要做什么、什么时候执行，再到会话中确认并发送，由助手创建任务
+  - text: 要做什么
+  - textbox "要做什么":
+    - /placeholder: 例如：提醒我整理日报
+    - text: Review the release checklist
+  - text: 什么时候执行
+  - textbox "什么时候执行":
+    - /placeholder: 例如：每个工作日上午 9 点
+    - text: Every weekday at {{clock}} Asia/Shanghai
+  - paragraph: 可填写具体日期或重复频率，需要时请注明时区
+  - paragraph: 这一步只准备草稿，不会发送消息，也不会创建任务。发送后，助手可能会向你确认细节；看到任务卡片才表示创建成功
+  - paragraph: 创建后，可回到“自动化任务”查看、修改或删除任务
+  - button "取消"
+  - button "前往会话确认"

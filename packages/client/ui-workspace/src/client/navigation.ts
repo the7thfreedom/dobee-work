@@ -64,7 +64,7 @@ export interface UiWorkspace {
    * Start a New Session flow and navigate to its Session; a creation the Host
    * refuses is shown through the Workspace notice and leaves the selection as it was.
    * @param workspaceId - explicit target; absent inherits the current or most recent Workspace.
-   * @param options - initial content; existing text or attachments are preserved unless clearPreviousDraft is true.
+   * @param options - initial content; existing text is kept unless explicitly appended to or cleared, and attachments are preserved.
    */
   startSession(workspaceId?: WorkspaceId, options?: StartSessionOptions): void
   /**

@@ -4434,6 +4434,7 @@ export interface Config {
 | `@deepseek-ai/dsh-browser-use` | — | [`packages/browser-use/browser-use/src/index.ts`](../packages/browser-use/browser-use/src/index.ts) |
 | `@deepseek-ai/dsh-client-dobee-brand` | — | [`packages/client/dobee-brand/src/index.ts`](../packages/client/dobee-brand/src/index.ts) |
 | `@deepseek-ai/dsh-client-dobee-ui-model-providers` | — | [`packages/client/dobee-ui-model-providers/src/index.ts`](../packages/client/dobee-ui-model-providers/src/index.ts) |
+| `@deepseek-ai/dsh-client-dobee-ui-schedule` | — | [`packages/client/dobee-ui-schedule/src/index.ts`](../packages/client/dobee-ui-schedule/src/index.ts) |
 | `@deepseek-ai/dsh-client-file-upload` | `agents` · `attachments` · `commands` · `connection` | [`packages/client/file-upload/src/index.ts`](../packages/client/file-upload/src/index.ts) |
 | `@deepseek-ai/dsh-client-locale` | — | [`packages/client/locale/src/index.ts`](../packages/client/locale/src/index.ts) |
 | `@deepseek-ai/dsh-client-modules` | `loader` | [`packages/client/modules/src/index.ts`](../packages/client/modules/src/index.ts) |

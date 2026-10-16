@@ -158,6 +158,7 @@ flowchart TD
     pkg_client_connection["client-connection"]
     pkg_client_dobee_brand["client-dobee-brand"]
     pkg_client_dobee_ui_model_providers["client-dobee-ui-model-providers"]
+    pkg_client_dobee_ui_schedule["client-dobee-ui-schedule"]
     pkg_client_file_upload["client-file-upload"]
     pkg_client_hmr["client-hmr"]
     pkg_client_locale["client-locale"]
@@ -1421,6 +1422,7 @@ flowchart TD
 | [`sdk-minimal`](../packages/bundle/sdk-minimal) | `bundle` | — |
 | [`client-dobee-brand`](../packages/client/dobee-brand) | `client` | — |
 | [`client-dobee-ui-model-providers`](../packages/client/dobee-ui-model-providers) | `client` | — |
+| [`client-dobee-ui-schedule`](../packages/client/dobee-ui-schedule) | `client` | — |
 | [`client-file-upload`](../packages/client/file-upload) | `client` | — |
 | [`client-hmr`](../packages/client/hmr) | `client` | — |
 | [`client-locale`](../packages/client/locale) | `client` | — |

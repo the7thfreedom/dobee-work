@@ -336,6 +336,30 @@ describe('draft documents in the input shell', () => {
     expect(shell.snapshot.attachmentIds).toEqual([attachment])
   })
 
+  it('appends requested text without removing existing references or attachments', () => {
+    const shell = makeShell()
+    const old = documentOf('existing ', session)
+    shell.setDraft(old)
+    const attachment = 'draft-image' as DraftAttachmentId
+    shell.addAttachments([attachment])
+    expect(shell.requestDraftInitialization({ prompt: 'new request', appendPrompt: true })).toBe('applied')
+    expect(shell.draftSnapshot).toEqual({ ...old, text: `${old.text}\n\nnew request` })
+    expect(chips(shell)).toHaveLength(1)
+    expect(shell.snapshot.attachmentIds).toEqual([attachment])
+    expect(shell.requestDraftInitialization({ appendPrompt: true })).toBe('preserved')
+    expect(shell.requestDraftInitialization({
+      prompt: 'replacement', appendPrompt: true, clearPreviousDraft: true,
+    })).toBe('applied')
+    expect(shell.draftSnapshot).toEqual({ text: 'replacement', references: [] })
+    expect(shell.snapshot.attachmentIds).toEqual([attachment])
+    shell.setDraft('')
+    expect(shell.requestDraftInitialization({ prompt: 'first request', appendPrompt: true })).toBe('applied')
+    expect(shell.snapshot.draft).toBe('first request')
+    shell.dispose()
+    expect(shell.requestDraftInitialization({ prompt: 'late request', appendPrompt: true })).toBe('blocked')
+    expect(shell.snapshot.draft).toBe('first request')
+  })
+
   it('persists clearing so a persistence rebind and a new shell do not restore references', () => {
     const shell = makeShell()
     shell.setDraft(documentOf(file, ' ', session))
